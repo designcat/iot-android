@@ -62,6 +62,7 @@ public class MainActivity extends ActionBarActivity {
     private BluetoothGatt mBleGatt;
     private BluetoothGattCharacteristic mBleCharacteristic;
     private String mStrReceivedNum = "";
+    private byte[] bleByteData;
     private String mStrSendNum = "";
 
     private Socket socket;
@@ -78,6 +79,7 @@ public class MainActivity extends ActionBarActivity {
         // デバイスがBLEに対応しているかを確認する.
         if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
             // BLEに対応していない旨のToastやダイアログを表示する.
+            //TODO ダイアログ
             finish();
         }
 
@@ -94,11 +96,15 @@ public class MainActivity extends ActionBarActivity {
     {
         if (Build.VERSION.SDK_INT >= SDKVER_LOLLIPOP)
         {
-            mBleScanner.stopScan(mScanCallbackUp);
+            if(mBleScanner != null) {
+                mBleScanner.stopScan(mScanCallbackUp);
+            }
         }
         else
         {
-            mBleAdapter.stopLeScan((BluetoothAdapter.LeScanCallback) this);
+            if(mBleAdapter != null && mBleAdapter.isEnabled()) {
+                mBleAdapter.stopLeScan(mScanCallbackUnder);
+            }
         }
 
         // 画面遷移時は通信を切断する.
@@ -117,6 +123,7 @@ public class MainActivity extends ActionBarActivity {
                     scanNewDevice();
                 }
                 else{
+                    //TODO リタイヤとみなす
                     finish();
                 }
                 break;
@@ -200,14 +207,19 @@ public class MainActivity extends ActionBarActivity {
             public void onScanResult(int callbackType, ScanResult result) {
                 super.onScanResult(callbackType, result);
                 BluetoothDevice device = result.getDevice();
-                System.out.println(result.getDevice().getName());
-                //TODO BLESerialに限定
+
+                if(device.getName() == null){
+                    return;
+                }
+                //TODO 限定する
                 for(BluetoothDevice item: deviceList) {
                     if(item.getAddress().equals(device.getAddress())){
                         return;
                     }
                 }
+
                 deviceList.add(device);
+                deviceListAdapter.notifyDataSetChanged();
             }
             @Override
             public void onScanFailed(int intErrorCode)
@@ -226,14 +238,18 @@ public class MainActivity extends ActionBarActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    System.out.println(device.getName());
-                    //TODO BLESerialに限定
+                    if(device.getName() == null){
+                        return;
+                    }
+
+                    //TODO 限定
                     for(BluetoothDevice item: deviceList) {
                         if(item.getAddress().equals(device.getAddress())){
                             return;
                         }
                     }
                     deviceList.add(device);
+                    deviceListAdapter.notifyDataSetChanged();
                 }
             });
         }
@@ -298,15 +314,20 @@ public class MainActivity extends ActionBarActivity {
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic)
         {
-            System.out.println(characteristic.getUuid().toString().toUpperCase());
             // キャラクタリスティックのUUIDをチェック(getUuidの結果が全て小文字で帰ってくるのでUpperCaseに変換)
-            if (UUID_BLESERIAL_RX.equals(characteristic.getUuid().toString().toUpperCase()))
+            if (UUID_BLESERIAL_RX.toUpperCase().equals(characteristic.getUuid().toString().toUpperCase()))
             {
+                bleByteData = characteristic.getValue();
                 // Peripheralで値が更新されたらNotificationを受ける.
                 mStrReceivedNum = characteristic.getStringValue(0);
                 // メインスレッドでTextViewに値をセットする.
                 mBleHandler.sendEmptyMessage(MESSAGE_NEW_RECEIVEDNUM);
             }
+        }
+
+        @Override
+        public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+
         }
     };
 
@@ -322,7 +343,11 @@ public class MainActivity extends ActionBarActivity {
             {
                 case MESSAGE_NEW_RECEIVEDNUM:
                     TextView receiveText = (TextView)findViewById(R.id.main_receive);
-                    receiveText.setText(mStrReceivedNum);
+                    String message = "";
+                    for(int i = 0; i < bleByteData.length; i++){
+                        message += bleByteData[i] + "/";
+                    }
+                    receiveText.setText(mStrReceivedNum + message);
                     break;
                 case MESSAGE_NEW_SENDNUM:
                     break;
@@ -331,7 +356,7 @@ public class MainActivity extends ActionBarActivity {
     };
 
     /**
-     *
+     * socket.ioの準備
      */
     private void initSocket(){
         try {

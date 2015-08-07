@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.MyTheme" parent="Theme.AppCompat.Light">
+        <!-- colorPrimary is used for the default action bar background -->
+        <item name="colorPrimary">@color/actionbar</item>
+
+        <!-- status bar には colorPrimaryDark が使用されます -->
+        <item name="colorPrimaryDark">@color/actionbar</item>
+
+        <!-- ウィジェットに色合いを付ける colorControlActivated のデフォルト値として colorAccent が使用されます -->
+        <item name="colorAccent">@color/app</item>
+
+        <!-- 他にも colorControlNormal、colorControlActivated、
+               colorControlHighlight と colorSwitchThumbNormalを設定できます -->
+        <!-- ActionModeを使うのに必要（後述） -->
+        <item name="android:textColorPrimary">@color/text_white</item>
+        <item name="android:textColorSecondary">@color/text_white</item>
+
+        <item name="android:textColor">@color/text_black</item>
+
+        <item name="windowActionModeOverlay">true</item>
+        <item name="android:windowBackground">@color/background</item>
+        <item name="windowActionBar">false</item>
+
+        <item name="android:textColorHint">@color/text_gray</item>
+        <!--switchの色指定-->
+        <!--<item name="colorControlActivated">@color/theme</item>
+        <item name="colorSwitchThumbNormal">@color/grey300</item>
+        <item name="android:colorForeground">@color/grey600</item>-->
+    </style>
+</resources>

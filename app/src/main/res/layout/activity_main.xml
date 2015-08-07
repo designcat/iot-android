@@ -1,9 +1,13 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 xmlns:tools="http://schemas.android.com/tools"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 tools:context=".MainActivity">
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
     <TextView
         android:id="@+id/main_title"
         android:layout_width="match_parent"
@@ -11,12 +15,12 @@
         android:textSize="14dp"
         android:text="接続するデバイスを選択して下さい。"
         android:gravity="center_horizontal"
-        android:layout_margin="16dp"
-        android:layout_alignParentTop="true"/>
+        android:layout_margin="16dp"/>
     <ListView
         android:id="@+id/main_list_view"
         android:layout_width="match_parent"
-        android:layout_height="100dp"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:layout_below="@+id/main_title"
         android:layout_margin="16dp"/>
     <TextView
@@ -24,7 +28,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/main_list_view"
-        android:text="aaaa"/>
+        android:text="aaaa"
+        android:layout_margin="16dp"/>
+    </LinearLayout>
 
     <FrameLayout
         android:layout_width="match_parent"
@@ -33,4 +39,4 @@
         android:layout_alignParentTop="true">
     </FrameLayout>
 
-</RelativeLayout>
+</FrameLayout>
