@@ -15,29 +15,39 @@ import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ListView;
-import android.widget.TextView;
 
+import com.github.nkzawa.emitter.Emitter;
+import com.github.nkzawa.socketio.client.Socket;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import org.json.JSONObject;
+
+import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
+import jp.nvzk.iotprojectandroid.model.Member;
+import jp.nvzk.iotprojectandroid.model.MyData;
 import jp.nvzk.iotprojectandroid.model.Sensor;
 import jp.nvzk.iotprojectandroid.util.ProfileUtil;
+import jp.nvzk.iotprojectandroid.util.SocketUtil;
 
-
-public class MainActivity extends AppCompatActivity {
+/**
+ * Created by user on 15/08/10.
+ */
+public class MapActivity extends AppCompatActivity {
+    private Socket socket;
+    private boolean startFlag;
+    private MyData myData;
+    private Sensor sensor;
 
     private final static int SDKVER_LOLLIPOP = 21;
     private final static int MESSAGE_NEW_RECEIVEDNUM = 0;
@@ -53,49 +63,20 @@ public class MainActivity extends AppCompatActivity {
     private byte[] bleByteData;
     private String mStrSendNum = "";
 
-    private ListView deviceListView;
-    private DeviceListAdapter deviceListAdapter;
-    private List<BluetoothDevice> deviceList = new ArrayList<>();
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_map);
 
-        // デバイスがBLEに対応しているかを確認する.
-        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
-            // BLEに対応していない旨のToastやダイアログを表示する.
-            //TODO ダイアログ
-            finish();
-        }
+        initView();
+        initSocket();
 
-        final Toolbar toolbar = (Toolbar) findViewById(R.id.tool_bar);
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setIcon(null);
-        getSupportActionBar().setDisplayUseLogoEnabled(false);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(false);
-        getSupportActionBar().setHomeButtonEnabled(true);
-        getSupportActionBar().setDisplayShowTitleEnabled(true);
-        getSupportActionBar().setTitle(R.string.title_bluetooth);
-
-        deviceListView = (ListView)findViewById(R.id.main_list_view);
-        deviceListAdapter = new DeviceListAdapter(this, deviceList);
-        deviceListView.setAdapter(deviceListAdapter);
-        deviceListView.setOnItemClickListener(onDeviceItemClickListener);
-
+        checkGPS();
+        checkBluetooth();
     }
 
-    @Override
-    protected void onResume(){
-        super.onResume();
+    private void initView(){
 
-        if(deviceList.size() > 0){
-            deviceList.clear();
-            deviceListAdapter.notifyDataSetChanged();
-        }
-
-        checkBluetooth();
-        checkGPS();
     }
 
     @Override
@@ -122,45 +103,88 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent date){
-        switch (requestCode){
-            case REQUEST_ENABLE_BT:
-                if(resultCode == RESULT_OK){
-                    scanNewDevice();
+    /**
+     * socket.ioの準備
+     */
+    private void initSocket(){
+
+        socket = SocketUtil.getSocket();
+
+        socket.on(Socket.EVENT_CONNECT, new Emitter.Listener() {
+
+            @Override
+            public void call(Object... args) {
+                //TODO readyの合図を送る
+                MyData data = new MyData();
+                data.setId(ProfileUtil.getUserId());
+                sendSocket(data);
+            }
+
+        }).on("timer", new Emitter.Listener() {
+            @Override
+            public void call(Object... args) {
+                //TODO timer START
+
+            }
+        }).on("start", new Emitter.Listener() {
+            @Override
+            public void call(Object... args) {
+               startFlag = true;
+            }
+        }).on("event", onReceive
+        ).on("finish", new Emitter.Listener() {
+            @Override
+            public void call(Object... args) {
+                //TODO finishを受け取ったら、ゲーム終了
+                JSONObject data = (JSONObject) args[0];
+                Gson gson = new Gson();
+                Type collectionType = new TypeToken<Collection<Member>>() {
+                }.getType();
+                ArrayList<Member> members = gson.fromJson(new Gson().toJson(data), collectionType);
+                Intent intent = new Intent(MapActivity.this, RankingActivity.class);
+                intent.putExtra(Const.KEY.MEMBERS, members);
+                startActivity(intent);
+                finish();
+            }
+        }).on(Socket.EVENT_DISCONNECT, new Emitter.Listener() {
+
+            @Override
+            public void call(Object... args) {
+                //TODO 接続がきれましたダイアログ
+                Intent intent = new Intent(MapActivity.this, LoginActivity.class);
+                startActivity(intent);
+                finish();
+            }
+
+        });
+
+        socket.connect();
+
+    }
+
+
+    private void sendSocket(MyData myData){
+        //Gson gson = new Gson();
+        socket.emit("event", myData);
+    }
+
+    private Emitter.Listener onReceive = new Emitter.Listener() {
+        @Override
+        public void call(final Object... args) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    JSONObject data = (JSONObject) args[0];
+                    Gson gson = new Gson();
+                    Type collectionType = new TypeToken<Collection<Member>>() {
+                    }.getType();
+                    List<Member> members = gson.fromJson(new Gson().toJson(data), collectionType);
+                    //TODO 地図表示
                 }
-                else{
-                    //TODO リタイヤとみなす
-                    finish();
-                }
-                break;
+            });
         }
-    }
+    };
 
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-
-    //TODO
     /**
      * GPSの確認
      */
@@ -175,16 +199,19 @@ public class MainActivity extends AppCompatActivity {
         mBleManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         mBleAdapter = mBleManager.getAdapter();
 
-        // BluetoothがOffならインテントを表示する.
+        // BluetoothがOffならリタイヤ.
         if (mBleAdapter == null || !mBleAdapter.isEnabled()) {
-            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            // Intentでボタンを押すとonActivityResultが実行されるので、第二引数の番号を元に処理を行う.
-            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+            finish();
         }
         else
         {
+            myData = new MyData();
+            myData.setId(ProfileUtil.getUserId());
+            sensor = new Sensor();
             // BLEが使用可能ならスキャン開始.
             scanNewDevice();
+            //デバイスと接続開始
+            mBleGatt = ProfileUtil.getBluetoothDevice().connectGatt(getApplicationContext(), false, mGattCallback);
         }
     }
 
@@ -221,15 +248,7 @@ public class MainActivity extends AppCompatActivity {
                 if(device.getName() == null){
                     return;
                 }
-                //TODO 限定する
-                for(BluetoothDevice item: deviceList) {
-                    if(item.getAddress().equals(device.getAddress())){
-                        return;
-                    }
-                }
-
-                deviceList.add(device);
-                deviceListAdapter.notifyDataSetChanged();
+                //TODO rssiによって判定
             }
             @Override
             public void onScanFailed(int intErrorCode)
@@ -251,15 +270,7 @@ public class MainActivity extends AppCompatActivity {
                     if(device.getName() == null){
                         return;
                     }
-
-                    //TODO 限定
-                    for(BluetoothDevice item: deviceList) {
-                        if(item.getAddress().equals(device.getAddress())){
-                            return;
-                        }
-                    }
-                    deviceList.add(device);
-                    deviceListAdapter.notifyDataSetChanged();
+                    //TODO rssiによって判定
                 }
             });
         }
@@ -279,11 +290,11 @@ public class MainActivity extends AppCompatActivity {
                 gatt.discoverServices();
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 // 接続が切れたらGATTを空にする.
-                if (mBleGatt != null)
+                /*if (mBleGatt != null)
                 {
                     mBleGatt.close();
                     mBleGatt = null;
-                }
+                }*/
             }
         }
         @Override
@@ -332,6 +343,15 @@ public class MainActivity extends AppCompatActivity {
                 mStrReceivedNum = characteristic.getStringValue(0);
                 // メインスレッドでTextViewに値をセットする.
                 mBleHandler.sendEmptyMessage(MESSAGE_NEW_RECEIVEDNUM);
+
+                sensor.setSensor(bleByteData);
+
+                //TODO GPSも　あとでこれごとGPSのchangeListenerに持っていく
+                if(startFlag) {
+                    myData.setSensor(sensor);
+                    sendSocket(myData);
+                }
+
             }
         }
 
@@ -352,16 +372,7 @@ public class MainActivity extends AppCompatActivity {
             switch (msg.what)
             {
                 case MESSAGE_NEW_RECEIVEDNUM:
-                    TextView receiveText = (TextView)findViewById(R.id.main_receive);
-                    String message = "";
-
-                    for(int i = 0; i < bleByteData.length; i++){
-                        message += bleByteData[i] + "/";
-                    }
-                    receiveText.setText(mStrReceivedNum + message);
-
-                    Sensor sensor = new Sensor();
-                    sensor.setSensor(bleByteData);
+                    //TODO 特にないかも
 
                     break;
                 case MESSAGE_NEW_SENDNUM:
@@ -370,22 +381,4 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-
-
-    /**
-     * デバイスリストから選択した時のリスナ
-     */
-    private AdapterView.OnItemClickListener onDeviceItemClickListener = new AdapterView.OnItemClickListener() {
-        @Override
-        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-            BluetoothDevice device = deviceList.get(position);
-
-            ProfileUtil.setBluetoothDevice(device);
-
-            Intent intent = new Intent(MainActivity.this, LoginActivity.class);
-            startActivity(intent);
-
-            //mBleGatt = device.connectGatt(getApplicationContext(), false, mGattCallback);
-        }
-    };
 }

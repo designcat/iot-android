@@ -8,22 +8,70 @@
         android:name="android.hardware.bluetooth_le"
         android:required="true" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" />
+    <!--
+ The ACCESS_COARSE/FINE_LOCATION permissions are not required to use
+         Google Maps Android API v2, but are recommended.
+    -->
+    <!-- 追加パーミッション１：Google Maps Android API のアクセス許可 -->
+    <permission
+        android:name="com.rakuraku.android.ekimap.permission.MAPS_RECEIVE"
+        android:protectionLevel="signature" />
+
+    <uses-permission android:name="com.rakuraku.android.ekimap.permission.MAPS_RECEIVE" />
+
+    <!-- 追加パーミッション２：現在位置取得のため -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+    <!-- 追加パーミッション３：Google Mapsの動作に必要 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" />
+
+    <!-- 追加パーミッション４：OpenGL ES version 2（地図描画用） -->
+    <uses-feature
+        android:glEsVersion="0x00020000"
+        android:required="true" />
 
     <application
         android:name=".App"
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/AppTheme" >
+        android:theme="@style/MyTheme"
+        android:largeHeap="true">
+
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
+
+        <meta-data
+            android:name="com.google.android.maps.v2.API_KEY"
+            android:value="AIzaSyB8UK9QaSxSgfgNPAJ1JHkMH5ZqWAbee9E" />
+
         <activity
             android:name=".MainActivity"
-            android:label="@string/app_name" >
+            android:label="@string/app_name"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".LoginActivity"
+                  android:screenOrientation="portrait"/>
+        <activity android:name=".RoomActivity"
+                  android:screenOrientation="portrait"/>
+        <activity android:name=".MemberActivity"
+                  android:screenOrientation="portrait"/>
+        <activity android:name=".MapActivity"
+                  android:screenOrientation="portrait"/>
+        <activity android:name=".RankingActivity"
+                  android:screenOrientation="portrait"/>
     </application>
 
 </manifest>

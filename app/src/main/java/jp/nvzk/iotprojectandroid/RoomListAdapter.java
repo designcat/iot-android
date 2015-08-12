@@ -1,6 +1,5 @@
 package jp.nvzk.iotprojectandroid;
 
-import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,16 +9,18 @@ import android.widget.TextView;
 
 import java.util.List;
 
+import jp.nvzk.iotprojectandroid.model.Room;
+
 /**
  * Created by amyu on 14/12/22.
  * コメントリストのAdapter
  */
-public class DeviceListAdapter extends BaseAdapter {
+public class RoomListAdapter extends BaseAdapter {
 
     /**
      * コメントリスト
      */
-    private List<BluetoothDevice> deviceList;
+    private List<Room> roomList;
 
     /**
      * LayoutInflate
@@ -30,10 +31,10 @@ public class DeviceListAdapter extends BaseAdapter {
      * コンストラクタ
      *
      * @param context  コンテキスト
-     * @param devices 表示するコメントデータ
+     * @param rooms 表示するコメントデータ
      */
-    public DeviceListAdapter(Context context, List<BluetoothDevice> devices) {
-        deviceList = devices;
+    public RoomListAdapter(Context context, List<Room> rooms) {
+        roomList = rooms;
         mLayoutInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
 
@@ -44,7 +45,7 @@ public class DeviceListAdapter extends BaseAdapter {
      */
     @Override
     public int getCount() {
-        return deviceList.size();
+        return roomList.size();
     }
 
     /**
@@ -54,8 +55,8 @@ public class DeviceListAdapter extends BaseAdapter {
      * @return
      */
     @Override
-    public BluetoothDevice getItem(int position) {
-        return deviceList.get(position);
+    public Room getItem(int position) {
+        return roomList.get(position);
     }
 
     /**
@@ -80,19 +81,18 @@ public class DeviceListAdapter extends BaseAdapter {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         ViewHolder holder;
-        BluetoothDevice device = getItem(position);
+        Room room = getItem(position);
         if (convertView == null) {
             convertView = mLayoutInflater.inflate(R.layout.item_list, parent, false);
             holder = new ViewHolder();
             holder.name = (TextView) convertView.findViewById(R.id.item_title);
-            holder.address = (TextView) convertView.findViewById(R.id.item_sub);
+            holder.id = (TextView) convertView.findViewById(R.id.item_sub);
             convertView.setTag(holder);
         } else {
             holder = (ViewHolder) convertView.getTag();
         }
 
-        holder.name.setText(device.getName());
-        holder.address.setText(device.getAddress());
+        holder.name.setText(room.getName());
 
         return convertView;
     }
@@ -101,7 +101,7 @@ public class DeviceListAdapter extends BaseAdapter {
     //ViewHolder
     private static class ViewHolder {
         TextView name;
-        TextView address;
+        TextView id;
     }
 
 }

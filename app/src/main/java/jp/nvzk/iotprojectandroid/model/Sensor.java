@@ -7,7 +7,7 @@ import java.io.Serializable;
  */
 public class Sensor implements Serializable{
     private byte pressure_thumb;
-    private byte pressure_pinky;
+    private byte pressure_pinkie;
     private byte pressure_heel;
     private byte acceleration_x;
     private byte acceleration_y;
@@ -20,6 +20,22 @@ public class Sensor implements Serializable{
     private byte compass_z;
     private byte atmospheric_pressure;
 
+    public void setSensor(byte[] bytes){
+        setPressure_thumb(bytes[0]);
+        setPressure_pinkie(bytes[1]);
+        setPressure_heel(bytes[2]);
+        setAcceleration_x(bytes[3]);
+        setAcceleration_y(bytes[4]);
+        setAcceleration_z(bytes[5]);
+        setGyro_x(bytes[6]);
+        setGyro_y(bytes[7]);
+        setGyro_z(bytes[8]);
+        setCompass_x(bytes[9]);
+        setCompass_y(bytes[10]);
+        setCompass_z(bytes[11]);
+        setAtmos_pressure(bytes[12]);
+    }
+
 
     public byte getPressure_thumb() {
         return pressure_thumb;
@@ -29,12 +45,12 @@ public class Sensor implements Serializable{
         this.pressure_thumb = pressure_thumb;
     }
 
-    public byte getPressure_pinky() {
-        return pressure_pinky;
+    public byte getPressure_pinkie() {
+        return pressure_pinkie;
     }
 
-    public void setPressure_pinky(byte pressure_pinky) {
-        this.pressure_pinky = pressure_pinky;
+    public void setPressure_pinkie(byte pressure_pinkie) {
+        this.pressure_pinkie = pressure_pinkie;
     }
 
     public byte getPressure_heel() {

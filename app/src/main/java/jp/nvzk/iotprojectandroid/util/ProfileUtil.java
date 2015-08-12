@@ -1,7 +1,10 @@
 package jp.nvzk.iotprojectandroid.util;
 
+import android.bluetooth.BluetoothDevice;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
+
+import com.google.gson.Gson;
 
 import jp.nvzk.iotprojectandroid.App;
 
@@ -31,5 +34,24 @@ public class ProfileUtil {
      */
     public static void setFirstStartFlag(boolean flag){
         sEditor.putBoolean(FIRST, flag).commit();
+    }
+
+    public static String getUserId(){
+        return sSetting.getString("ID", "");
+    }
+
+    public static void setUserId(String id){
+        sEditor.putString("ID", id);
+    }
+
+    public static BluetoothDevice getBluetoothDevice(){
+        String string = sSetting.getString("DEVICE", "");
+        Gson gson = new Gson();
+        return gson.fromJson(string, BluetoothDevice.class);
+    }
+
+    public static void setBluetoothDevice(BluetoothDevice device){
+        Gson gson = new Gson();
+        sEditor.putString("DEVICE", gson.toJson(device));
     }
 }

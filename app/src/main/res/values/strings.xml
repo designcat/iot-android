@@ -4,5 +4,11 @@
     <string name="app_name">IotProjectAndroid</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    
+    <string name="title_bluetooth">デバイス一覧</string>
+    <string name="title_login">ユーザ名設定</string>
+    <string name="title_room">部屋一覧</string>
+    <string name="title_member">メンバー一覧</string>
+    <string name="title_finish">ゲーム終了</string>
 
 </resources>
