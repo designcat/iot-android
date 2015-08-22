@@ -17,5 +17,6 @@ public class Const {
     public class KEY{
         public static final String DEVICE = "DEVICE";
         public static final String MEMBERS = "MEMBERS";
+        public static final String ROOM = "ROOM";
     }
 }

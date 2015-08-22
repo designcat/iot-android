@@ -1,36 +1,19 @@
 package jp.nvzk.iotprojectandroid.model;
 
 /**
- * Created by user on 15/08/09.
+ * Created by yurina on 2015/08/22.
  */
 public class MyData {
-    private String id;
+    private String userId;
     private String name;
-    private Sensor sensor;
-    private GPS gps;
+    private int roomId;
 
-    public String getId() {
-        return id;
+    public String getUserId() {
+        return userId;
     }
 
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public Sensor getSensor() {
-        return sensor;
-    }
-
-    public void setSensor(Sensor sensor) {
-        this.sensor = sensor;
-    }
-
-    public GPS getGps() {
-        return gps;
-    }
-
-    public void setGps(GPS gps) {
-        this.gps = gps;
+    public void setUserId(String id) {
+        this.userId = id;
     }
 
     public String getName() {
@@ -39,5 +22,13 @@ public class MyData {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public int getRoomId() {
+        return roomId;
+    }
+
+    public void setRoomId(int roomId) {
+        this.roomId = roomId;
     }
 }

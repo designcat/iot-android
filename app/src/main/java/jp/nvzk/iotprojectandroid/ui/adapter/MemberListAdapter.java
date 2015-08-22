@@ -1,4 +1,4 @@
-package jp.nvzk.iotprojectandroid;
+package jp.nvzk.iotprojectandroid.ui.adapter;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -9,6 +9,7 @@ import android.widget.TextView;
 
 import java.util.List;
 
+import jp.nvzk.iotprojectandroid.R;
 import jp.nvzk.iotprojectandroid.model.Member;
 
 /**

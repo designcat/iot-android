@@ -1,5 +1,6 @@
-package jp.nvzk.iotprojectandroid;
+package jp.nvzk.iotprojectandroid.ui.adapter;
 
+import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,18 +10,18 @@ import android.widget.TextView;
 
 import java.util.List;
 
-import jp.nvzk.iotprojectandroid.model.Member;
+import jp.nvzk.iotprojectandroid.R;
 
 /**
  * Created by amyu on 14/12/22.
  * コメントリストのAdapter
  */
-public class RankingListAdapter extends BaseAdapter {
+public class DeviceListAdapter extends BaseAdapter {
 
     /**
      * コメントリスト
      */
-    private List<Member> roomList;
+    private List<BluetoothDevice> deviceList;
 
     /**
      * LayoutInflate
@@ -31,10 +32,10 @@ public class RankingListAdapter extends BaseAdapter {
      * コンストラクタ
      *
      * @param context  コンテキスト
-     * @param rooms 表示するコメントデータ
+     * @param devices 表示するコメントデータ
      */
-    public RankingListAdapter(Context context, List<Member> rooms) {
-        roomList = rooms;
+    public DeviceListAdapter(Context context, List<BluetoothDevice> devices) {
+        deviceList = devices;
         mLayoutInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
 
@@ -45,7 +46,7 @@ public class RankingListAdapter extends BaseAdapter {
      */
     @Override
     public int getCount() {
-        return roomList.size();
+        return deviceList.size();
     }
 
     /**
@@ -55,8 +56,8 @@ public class RankingListAdapter extends BaseAdapter {
      * @return
      */
     @Override
-    public Member getItem(int position) {
-        return roomList.get(position);
+    public BluetoothDevice getItem(int position) {
+        return deviceList.get(position);
     }
 
     /**
@@ -81,21 +82,19 @@ public class RankingListAdapter extends BaseAdapter {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         ViewHolder holder;
-        Member member = getItem(position);
+        BluetoothDevice device = getItem(position);
         if (convertView == null) {
-            convertView = mLayoutInflater.inflate(R.layout.item_list_ranking, parent, false);
+            convertView = mLayoutInflater.inflate(R.layout.item_list, parent, false);
             holder = new ViewHolder();
-            holder.rank = (TextView) convertView.findViewById(R.id.item_rank);
             holder.name = (TextView) convertView.findViewById(R.id.item_title);
-            holder.point = (TextView) convertView.findViewById(R.id.item_point);
+            holder.address = (TextView) convertView.findViewById(R.id.item_sub);
             convertView.setTag(holder);
         } else {
             holder = (ViewHolder) convertView.getTag();
         }
 
-        holder.rank.setText((position + 1) + " P");
-        holder.name.setText(member.getName());
-        holder.point.setText(member.getPoint());
+        holder.name.setText(device.getName());
+        holder.address.setText(device.getAddress());
 
         return convertView;
     }
@@ -103,9 +102,8 @@ public class RankingListAdapter extends BaseAdapter {
 
     //ViewHolder
     private static class ViewHolder {
-        TextView rank;
         TextView name;
-        TextView point;
+        TextView address;
     }
 
 }

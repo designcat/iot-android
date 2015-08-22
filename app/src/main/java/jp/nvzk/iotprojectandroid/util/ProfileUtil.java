@@ -44,14 +44,33 @@ public class ProfileUtil {
         sEditor.putString("ID", id);
     }
 
-    public static BluetoothDevice getBluetoothDevice(){
-        String string = sSetting.getString("DEVICE", "");
+    public static String getUserName(){
+        return sSetting.getString("NAME", "");
+    }
+
+    public static void setUserName(String name){
+        sEditor.putString("NAME", name);
+    }
+
+    public static BluetoothDevice getBluetoothDeviceLeft(){
+        String string = sSetting.getString("DEVICE_LEFT", "");
         Gson gson = new Gson();
         return gson.fromJson(string, BluetoothDevice.class);
     }
 
-    public static void setBluetoothDevice(BluetoothDevice device){
+    public static void setBluetoothDeviceLeft(BluetoothDevice device){
         Gson gson = new Gson();
-        sEditor.putString("DEVICE", gson.toJson(device));
+        sEditor.putString("DEVICE_LEFT", gson.toJson(device));
+    }
+
+    public static BluetoothDevice getBluetoothDeviceRight(){
+        String string = sSetting.getString("DEVICE_RIGHT", "");
+        Gson gson = new Gson();
+        return gson.fromJson(string, BluetoothDevice.class);
+    }
+
+    public static void setBluetoothDeviceRight(BluetoothDevice device){
+        Gson gson = new Gson();
+        sEditor.putString("DEVICE_RIGHT", gson.toJson(device));
     }
 }

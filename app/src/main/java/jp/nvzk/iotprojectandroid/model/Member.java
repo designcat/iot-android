@@ -9,6 +9,7 @@ public class Member implements Serializable {
     private String name;
     private String id;
     private int point;
+    private int status;
     private GPS gps;
 
     public String getName() {
@@ -41,5 +42,13 @@ public class Member implements Serializable {
 
     public void setGps(GPS gps) {
         this.gps = gps;
+    }
+
+    public int getStatus() {
+        return status;
+    }
+
+    public void setStatus(int status) {
+        this.status = status;
     }
 }

@@ -1,4 +1,4 @@
-package jp.nvzk.iotprojectandroid;
+package jp.nvzk.iotprojectandroid.ui.adapter;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -9,18 +9,19 @@ import android.widget.TextView;
 
 import java.util.List;
 
-import jp.nvzk.iotprojectandroid.model.Room;
+import jp.nvzk.iotprojectandroid.R;
+import jp.nvzk.iotprojectandroid.model.Member;
 
 /**
  * Created by amyu on 14/12/22.
  * コメントリストのAdapter
  */
-public class RoomListAdapter extends BaseAdapter {
+public class RankingListAdapter extends BaseAdapter {
 
     /**
      * コメントリスト
      */
-    private List<Room> roomList;
+    private List<Member> roomList;
 
     /**
      * LayoutInflate
@@ -33,7 +34,7 @@ public class RoomListAdapter extends BaseAdapter {
      * @param context  コンテキスト
      * @param rooms 表示するコメントデータ
      */
-    public RoomListAdapter(Context context, List<Room> rooms) {
+    public RankingListAdapter(Context context, List<Member> rooms) {
         roomList = rooms;
         mLayoutInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
@@ -55,7 +56,7 @@ public class RoomListAdapter extends BaseAdapter {
      * @return
      */
     @Override
-    public Room getItem(int position) {
+    public Member getItem(int position) {
         return roomList.get(position);
     }
 
@@ -81,18 +82,21 @@ public class RoomListAdapter extends BaseAdapter {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         ViewHolder holder;
-        Room room = getItem(position);
+        Member member = getItem(position);
         if (convertView == null) {
-            convertView = mLayoutInflater.inflate(R.layout.item_list, parent, false);
+            convertView = mLayoutInflater.inflate(R.layout.item_list_ranking, parent, false);
             holder = new ViewHolder();
+            holder.rank = (TextView) convertView.findViewById(R.id.item_rank);
             holder.name = (TextView) convertView.findViewById(R.id.item_title);
-            holder.id = (TextView) convertView.findViewById(R.id.item_sub);
+            holder.point = (TextView) convertView.findViewById(R.id.item_point);
             convertView.setTag(holder);
         } else {
             holder = (ViewHolder) convertView.getTag();
         }
 
-        holder.name.setText(room.getName());
+        holder.rank.setText((position + 1) + " P");
+        holder.name.setText(member.getName());
+        holder.point.setText(member.getPoint());
 
         return convertView;
     }
@@ -100,8 +104,9 @@ public class RoomListAdapter extends BaseAdapter {
 
     //ViewHolder
     private static class ViewHolder {
+        TextView rank;
         TextView name;
-        TextView id;
+        TextView point;
     }
 
 }

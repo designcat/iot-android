@@ -6,6 +6,7 @@ import java.io.Serializable;
  * Created by menteadmin on 2015/08/07.
  */
 public class Sensor implements Serializable{
+    private byte side;
     private byte pressure_thumb;
     private byte pressure_pinkie;
     private byte pressure_heel;
@@ -21,19 +22,20 @@ public class Sensor implements Serializable{
     private byte atmospheric_pressure;
 
     public void setSensor(byte[] bytes){
-        setPressure_thumb(bytes[0]);
-        setPressure_pinkie(bytes[1]);
-        setPressure_heel(bytes[2]);
-        setAcceleration_x(bytes[3]);
-        setAcceleration_y(bytes[4]);
-        setAcceleration_z(bytes[5]);
-        setGyro_x(bytes[6]);
-        setGyro_y(bytes[7]);
-        setGyro_z(bytes[8]);
-        setCompass_x(bytes[9]);
-        setCompass_y(bytes[10]);
-        setCompass_z(bytes[11]);
-        setAtmos_pressure(bytes[12]);
+        setSide(bytes[0]);
+        setPressure_thumb(bytes[1]);
+        setPressure_pinkie(bytes[2]);
+        setPressure_heel(bytes[3]);
+        setAcceleration_x(bytes[4]);
+        setAcceleration_y(bytes[5]);
+        setAcceleration_z(bytes[6]);
+        setGyro_x(bytes[7]);
+        setGyro_y(bytes[8]);
+        setGyro_z(bytes[9]);
+        setCompass_x(bytes[10]);
+        setCompass_y(bytes[11]);
+        setCompass_z(bytes[12]);
+        setAtmos_pressure(bytes[13]);
     }
 
 
@@ -139,5 +141,13 @@ public class Sensor implements Serializable{
 
     public void setAtmos_pressure(byte atmos_pressure) {
         this.atmospheric_pressure = atmos_pressure;
+    }
+
+    public byte getSide() {
+        return side;
+    }
+
+    public void setSide(byte side) {
+        this.side = side;
     }
 }

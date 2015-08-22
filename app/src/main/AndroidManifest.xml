@@ -10,16 +10,12 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" />
-    <!--
- The ACCESS_COARSE/FINE_LOCATION permissions are not required to use
-         Google Maps Android API v2, but are recommended.
-    -->
-    <!-- 追加パーミッション１：Google Maps Android API のアクセス許可 -->
-    <permission
-        android:name="com.rakuraku.android.ekimap.permission.MAPS_RECEIVE"
-        android:protectionLevel="signature" />
 
-    <uses-permission android:name="com.rakuraku.android.ekimap.permission.MAPS_RECEIVE" />
+    <!-- 追加パーミッション１：Google Maps Android API のアクセス許可 -->
+    <permission android:name="${applicationId}.permission.MAPS_RECEIVE"
+    android:protectionLevel="signature" />
+
+    <uses-permission android:name="${applicationId}.permission.MAPS_RECEIVE" />
 
     <!-- 追加パーミッション２：現在位置取得のため -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
@@ -48,12 +44,13 @@
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
 
+        <!--TODO-->
         <meta-data
             android:name="com.google.android.maps.v2.API_KEY"
-            android:value="AIzaSyB8UK9QaSxSgfgNPAJ1JHkMH5ZqWAbee9E" />
+            android:value="" />
 
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.MainActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait">
             <intent-filter>
@@ -62,15 +59,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".LoginActivity"
+        <activity android:name=".ui.LoginActivity"
                   android:screenOrientation="portrait"/>
-        <activity android:name=".RoomActivity"
+        <activity android:name=".ui.RoomActivity"
                   android:screenOrientation="portrait"/>
-        <activity android:name=".MemberActivity"
+        <activity android:name=".ui.GameActivity"
                   android:screenOrientation="portrait"/>
-        <activity android:name=".MapActivity"
-                  android:screenOrientation="portrait"/>
-        <activity android:name=".RankingActivity"
+        <activity android:name=".ui.RankingActivity"
                   android:screenOrientation="portrait"/>
     </application>
 

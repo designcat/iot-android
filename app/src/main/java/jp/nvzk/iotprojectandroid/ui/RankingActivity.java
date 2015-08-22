@@ -1,4 +1,4 @@
-package jp.nvzk.iotprojectandroid;
+package jp.nvzk.iotprojectandroid.ui;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -10,6 +10,9 @@ import android.widget.ListView;
 import java.util.ArrayList;
 import java.util.List;
 
+import jp.nvzk.iotprojectandroid.Const;
+import jp.nvzk.iotprojectandroid.R;
+import jp.nvzk.iotprojectandroid.ui.adapter.RankingListAdapter;
 import jp.nvzk.iotprojectandroid.model.Member;
 
 /**

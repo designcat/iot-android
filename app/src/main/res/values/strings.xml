@@ -11,4 +11,9 @@
     <string name="title_member">メンバー一覧</string>
     <string name="title_finish">ゲーム終了</string>
 
+    <string name="select_left">左足のセット完了</string>
+    <string name="select_right">右足のセット完了</string>
+
+    <string name="error_select_device">選択したデバイスの左右が違います。</string>
+
 </resources>

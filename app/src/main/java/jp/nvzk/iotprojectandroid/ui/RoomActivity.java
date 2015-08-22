@@ -1,4 +1,4 @@
-package jp.nvzk.iotprojectandroid;
+package jp.nvzk.iotprojectandroid.ui;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -12,6 +12,9 @@ import android.widget.ListView;
 import java.util.ArrayList;
 import java.util.List;
 
+import jp.nvzk.iotprojectandroid.Const;
+import jp.nvzk.iotprojectandroid.R;
+import jp.nvzk.iotprojectandroid.ui.adapter.RoomListAdapter;
 import jp.nvzk.iotprojectandroid.model.Room;
 
 /**
@@ -44,10 +47,8 @@ public class RoomActivity extends AppCompatActivity {
     protected void onResume(){
         super.onResume();
         //TODO 接続チェック　だめだったらやり直し
-        if(roomList.size() > 0){
-            roomList.clear();
-            roomListAdapter.notifyDataSetChanged();
-        }
+        roomList.clear();
+        roomListAdapter.notifyDataSetChanged();
         initList();
     }
 
@@ -74,7 +75,9 @@ public class RoomActivity extends AppCompatActivity {
     private AdapterView.OnItemClickListener mOnItemClickListener = new AdapterView.OnItemClickListener() {
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-            Intent intent = new Intent(RoomActivity.this, MemberActivity.class);
+            Room room = roomListAdapter.getItem(position);
+            Intent intent = new Intent(RoomActivity.this, GameActivity.class);
+            intent.putExtra(Const.KEY.ROOM, room.getId());
             startActivity(intent);
         }
     };
