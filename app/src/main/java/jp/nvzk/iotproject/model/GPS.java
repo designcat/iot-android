@@ -1,4 +1,4 @@
-package jp.nvzk.iotprojectandroid.model;
+package jp.nvzk.iotproject.model;
 
 import android.location.Location;
 

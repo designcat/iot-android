@@ -1,4 +1,4 @@
-package jp.nvzk.iotprojectandroid.util;
+package jp.nvzk.iotproject.util;
 
 import com.github.nkzawa.socketio.client.IO;
 import com.github.nkzawa.socketio.client.Socket;

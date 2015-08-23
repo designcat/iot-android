@@ -1,4 +1,4 @@
-package jp.nvzk.iotprojectandroid.ui.adapter;
+package jp.nvzk.iotproject.ui.adapter;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -9,8 +9,8 @@ import android.widget.TextView;
 
 import java.util.List;
 
-import jp.nvzk.iotprojectandroid.R;
-import jp.nvzk.iotprojectandroid.model.Room;
+import jp.nvzk.iotproject.R;
+import jp.nvzk.iotproject.model.Room;
 
 /**
  * Created by amyu on 14/12/22.
@@ -94,6 +94,7 @@ public class RoomListAdapter extends BaseAdapter {
         }
 
         holder.name.setText(room.getName());
+        holder.id.setText("ID: " + String.valueOf(room.getId()));
 
         return convertView;
     }

@@ -1,4 +1,4 @@
-package jp.nvzk.iotprojectandroid;
+package jp.nvzk.iotproject;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;

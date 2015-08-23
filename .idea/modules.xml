@@ -2,9 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/IotProjectAndroid.iml" filepath="$PROJECT_DIR$/IotProjectAndroid.iml" />
+      <module fileurl="file://$PROJECT_DIR$/IotProject.iml" filepath="$PROJECT_DIR$/IotProject.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>
 </project>
-

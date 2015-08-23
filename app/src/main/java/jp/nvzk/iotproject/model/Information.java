@@ -1,4 +1,4 @@
-package jp.nvzk.iotprojectandroid.model;
+package jp.nvzk.iotproject.model;
 
 /**
  * Created by user on 15/08/09.

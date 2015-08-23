@@ -1,8 +1,9 @@
-package jp.nvzk.iotprojectandroid.ui;
+package jp.nvzk.iotproject.ui;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ListView;
@@ -10,10 +11,10 @@ import android.widget.ListView;
 import java.util.ArrayList;
 import java.util.List;
 
-import jp.nvzk.iotprojectandroid.Const;
-import jp.nvzk.iotprojectandroid.R;
-import jp.nvzk.iotprojectandroid.ui.adapter.RankingListAdapter;
-import jp.nvzk.iotprojectandroid.model.Member;
+import jp.nvzk.iotproject.Const;
+import jp.nvzk.iotproject.R;
+import jp.nvzk.iotproject.ui.adapter.RankingListAdapter;
+import jp.nvzk.iotproject.model.Member;
 
 /**
  * Created by user on 15/08/09.
@@ -42,6 +43,16 @@ public class RankingActivity extends AppCompatActivity {
         getMemberList = (ArrayList<Member>) getIntent().getSerializableExtra(Const.KEY.MEMBERS);
 
         initView();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()){
+            case android.R.id.home:
+                finish();
+                break;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     private void initView(){

@@ -1,4 +1,4 @@
-package jp.nvzk.iotprojectandroid.util;
+package jp.nvzk.iotproject.util;
 
 import android.bluetooth.BluetoothDevice;
 import android.content.SharedPreferences;
@@ -6,7 +6,7 @@ import android.preference.PreferenceManager;
 
 import com.google.gson.Gson;
 
-import jp.nvzk.iotprojectandroid.App;
+import jp.nvzk.iotproject.App;
 
 
 /**
@@ -41,7 +41,7 @@ public class ProfileUtil {
     }
 
     public static void setUserId(String id){
-        sEditor.putString("ID", id);
+        sEditor.putString("ID", id).commit();
     }
 
     public static String getUserName(){
@@ -49,7 +49,7 @@ public class ProfileUtil {
     }
 
     public static void setUserName(String name){
-        sEditor.putString("NAME", name);
+        sEditor.putString("NAME", name).commit();
     }
 
     public static BluetoothDevice getBluetoothDeviceLeft(){
@@ -60,7 +60,7 @@ public class ProfileUtil {
 
     public static void setBluetoothDeviceLeft(BluetoothDevice device){
         Gson gson = new Gson();
-        sEditor.putString("DEVICE_LEFT", gson.toJson(device));
+        sEditor.putString("DEVICE_LEFT", gson.toJson(device)).commit();
     }
 
     public static BluetoothDevice getBluetoothDeviceRight(){
@@ -71,6 +71,6 @@ public class ProfileUtil {
 
     public static void setBluetoothDeviceRight(BluetoothDevice device){
         Gson gson = new Gson();
-        sEditor.putString("DEVICE_RIGHT", gson.toJson(device));
+        sEditor.putString("DEVICE_RIGHT", gson.toJson(device)).commit();
     }
 }

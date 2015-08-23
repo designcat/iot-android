@@ -1,4 +1,4 @@
-package jp.nvzk.iotprojectandroid.ui;
+package jp.nvzk.iotproject.ui;
 
 import android.annotation.TargetApi;
 import android.bluetooth.BluetoothAdapter;
@@ -14,15 +14,16 @@ import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
@@ -33,11 +34,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import jp.nvzk.iotprojectandroid.Const;
-import jp.nvzk.iotprojectandroid.ui.adapter.DeviceListAdapter;
-import jp.nvzk.iotprojectandroid.R;
-import jp.nvzk.iotprojectandroid.model.Sensor;
-import jp.nvzk.iotprojectandroid.util.ProfileUtil;
+import jp.nvzk.iotproject.Const;
+import jp.nvzk.iotproject.ui.adapter.DeviceListAdapter;
+import jp.nvzk.iotproject.R;
+import jp.nvzk.iotproject.model.Sensor;
+import jp.nvzk.iotproject.util.ProfileUtil;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -65,6 +66,8 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean isSetLeft = false;
     private boolean isSetRight = false;
+
+    private AlertDialog gpsDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -157,7 +160,6 @@ public class MainActivity extends AppCompatActivity {
                     scanNewDevice();
                 }
                 else{
-                    //TODO リタイヤとみなす
                     finish();
                 }
                 break;
@@ -165,33 +167,48 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-
     /**
-     * TODO GPSの確認
+     * GPSの確認
      */
     private void checkGPS(){
+        LocationManager nlLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        if (!nlLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
 
+            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+            alertDialogBuilder.setMessage("GPSが有効になっていません。\n有効化しますか？")
+                    .setCancelable(false)
+
+                            //GPS設定画面起動用ボタンとイベントの定義
+                    .setPositiveButton("GPS設定起動",
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                    Intent callGPSSettingIntent = new Intent(
+                                            android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                                    startActivity(callGPSSettingIntent);
+                                    dialog.dismiss();
+                                    gpsDialog = null;
+                                }
+                            });
+            //キャンセルボタン処理
+            alertDialogBuilder.setNegativeButton("キャンセル",
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.cancel();
+                            finish();
+                        }
+                    });
+            if(gpsDialog == null) {
+                gpsDialog = alertDialogBuilder.create();
+                // 設定画面へ移動するかの問い合わせダイアログを表示
+                gpsDialog.show();
+            }
+        }
+        else {
+            if (gpsDialog != null) {
+                gpsDialog.dismiss();
+                gpsDialog = null;
+            }
+        }
     }
 
     /**

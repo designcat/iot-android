@@ -1,6 +1,4 @@
-package jp.nvzk.iotprojectandroid.model;
-
-import android.bluetooth.BluetoothDevice;
+package jp.nvzk.iotproject.model;
 
 /**
  * Created by yurina on 2015/08/22.

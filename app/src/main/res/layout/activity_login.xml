@@ -17,26 +17,65 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:orientation="vertical"
-        android:gravity="center">
+        android:gravity="center_horizontal"
+        android:layout_margin="32dp">
 
-        <EditText
-            android:id="@+id/login_edit_text"
-            android:layout_width="200dp"
+        <TextView
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="ユーザID"
-            android:layout_marginBottom="8dp"/>
+            android:textColor="@color/text_gray"
+            android:text="ユーザID"
+            android:textSize="12dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <EditText
+                android:id="@+id/login_edit_text"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:padding="8dp"
+                android:layout_marginRight="8dp"
+                android:hint=""
+                android:textColorHint="@color/text_gray"
+                android:textColor="@drawable/text_edit"
+                android:layout_marginBottom="8dp"
+                android:inputType="text"
+                android:background="@color/light_yellow"
+                android:focusable="false"/>
+            <Button
+                android:id="@+id/login_select_btn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="8dp"
+                android:text="アカウント選択"/>
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_gray"
+            android:text="ニックネーム"
+            android:textSize="12dp"/>
 
         <EditText
             android:id="@+id/login_name_edit_text"
-            android:layout_width="200dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="ユーザ名"/>
+            android:padding="8dp"
+            android:textColorHint="@color/text_gray"
+            android:textColor="@drawable/text_edit"
+            android:hint=""
+            android:inputType="text"
+            android:background="@color/light_yellow"/>
 
         <Button
             android:id="@+id/login_btn"
             android:layout_width="200dp"
             android:layout_height="50dp"
-            android:layout_margin="16dp"
+            android:layout_marginTop="16dp"
             android:gravity="center"
             android:text="ログイン"/>
 

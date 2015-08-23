@@ -1,4 +1,4 @@
-package jp.nvzk.iotprojectandroid.ui.adapter;
+package jp.nvzk.iotproject.ui.adapter;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -9,8 +9,8 @@ import android.widget.TextView;
 
 import java.util.List;
 
-import jp.nvzk.iotprojectandroid.R;
-import jp.nvzk.iotprojectandroid.model.Member;
+import jp.nvzk.iotproject.R;
+import jp.nvzk.iotproject.model.Member;
 
 /**
  * Created by amyu on 14/12/22.
@@ -94,9 +94,9 @@ public class RankingListAdapter extends BaseAdapter {
             holder = (ViewHolder) convertView.getTag();
         }
 
-        holder.rank.setText((position + 1) + " P");
+        holder.rank.setText((position + 1) + ".");
         holder.name.setText(member.getName());
-        holder.point.setText(member.getPoint());
+        holder.point.setText(member.getPoint() + " P");
 
         return convertView;
     }

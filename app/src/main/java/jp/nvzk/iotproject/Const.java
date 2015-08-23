@@ -1,4 +1,4 @@
-package jp.nvzk.iotprojectandroid;
+package jp.nvzk.iotproject;
 
 /**
  * Created by menteadmin on 2015/07/31.
