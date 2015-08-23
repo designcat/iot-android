@@ -6,23 +6,23 @@ import android.location.Location;
  * Created by user on 15/08/09.
  */
 public class GPS {
-    private double lat;
-    private double lng;
+    private double latitude;
+    private double longitude;
 
     public double getLat() {
-        return lat;
+        return latitude;
     }
 
     public void setLat(double lat) {
-        this.lat = lat;
+        this.latitude = lat;
     }
 
     public double getLng() {
-        return lng;
+        return longitude;
     }
 
     public void setLng(double lng) {
-        this.lng = lng;
+        this.longitude = lng;
     }
 
     public void setLocation(Location location){

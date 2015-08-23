@@ -55,19 +55,21 @@ import java.lang.reflect.Type;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
 
 import jp.nvzk.iotproject.Const;
-import jp.nvzk.iotproject.model.GPS;
-import jp.nvzk.iotproject.ui.adapter.MemberListAdapter;
 import jp.nvzk.iotproject.R;
+import jp.nvzk.iotproject.model.GPS;
 import jp.nvzk.iotproject.model.Member;
 import jp.nvzk.iotproject.model.MyData;
 import jp.nvzk.iotproject.model.MyDevice;
 import jp.nvzk.iotproject.model.Sensor;
+import jp.nvzk.iotproject.ui.adapter.MemberListAdapter;
 import jp.nvzk.iotproject.util.ProfileUtil;
 import jp.nvzk.iotproject.util.SocketUtil;
 
@@ -91,6 +93,7 @@ public class GameActivity extends AppCompatActivity {
     private final int zoomLevel = 18;
     private Location currentLocation;
     private double tagRange = 10;
+    private Map<String, Marker> markersList = new HashMap<>();
 
     private Socket socket;
     private boolean startFlag;
@@ -274,7 +277,7 @@ public class GameActivity extends AppCompatActivity {
         ).on("start", onStart
         ).on("disconnect", onDisconnectMember
         ).on("login", onReceiveMemberList
-        ).on("sensor", onReceiveSensorList
+        ).on("footprint", onReceiveSensor
         ).on("tag", onReceiveTag
         ).on("finish", new Emitter.Listener() {
             @Override
@@ -303,7 +306,7 @@ public class GameActivity extends AppCompatActivity {
     }
 
     private void sendSensor(MyDevice myDevice){
-        socket.emit("sensor", myDevice);
+        socket.emit("footprint", myDevice);
     }
 
     private Emitter.Listener onReceiveMemberList = new Emitter.Listener() {
@@ -436,7 +439,7 @@ public class GameActivity extends AppCompatActivity {
         }
     };
 
-    private Emitter.Listener onReceiveSensorList = new Emitter.Listener() {
+    private Emitter.Listener onReceiveSensor = new Emitter.Listener() {
         @Override
         public void call(final Object... args) {
             runOnUiThread(new Runnable() {
@@ -444,42 +447,41 @@ public class GameActivity extends AppCompatActivity {
                 public void run() {
                     JSONObject data = (JSONObject) args[0];
                     Gson gson = new Gson();
-                    Type collectionType = new TypeToken<Collection<Member>>() {
-                    }.getType();
-                    List<Member> members = gson.fromJson(new Gson().toJson(data), collectionType);
+                    Member item = gson.fromJson(new Gson().toJson(data), Member.class);
 
-                    for(Member item: members) {
-                        if (isTag && !item.getId().equals(ProfileUtil.getUserId()) && !item.getId().equals(cannotSendId)) {
-                            double distance = getDistance(currentLocation.getLatitude(), currentLocation.getLongitude(), item.getGps().getLat(), item.getGps().getLng());
-                            if (distance < tagRange) {
-                                socket.emit("tag", item.getId());
-                                isTag = false;
-                                break;
-                            }
+                    if (isTag && !item.getId().equals(ProfileUtil.getUserId()) && !item.getId().equals(cannotSendId)) {
+                        double distance = getDistance(currentLocation.getLatitude(), currentLocation.getLongitude(), item.getGps().getLat(), item.getGps().getLng());
+                        if (distance < tagRange) {
+                            socket.emit("tag", item.getId());
+                            isTag = false;
                         }
                     }
-                    mMap.clear();
-                    for(Member item: members){
-                        if(item.getId().equals(ProfileUtil.getUserId())) {
-                            pointText.setText(item.getPoint() + "P");
-                            if(item.isMoving()){
-                                mMap.setMyLocationEnabled(true);
-                            }
-                            else{
-                                mMap.setMyLocationEnabled(false);
-                            }
+
+                    if(markersList.containsKey(item.getId())){
+                        Marker marker = markersList.get(item.getId());
+                        marker.remove();
+                    }
+
+                    if(item.getId().equals(ProfileUtil.getUserId())) {
+                        pointText.setText(item.getPoint() + "P");
+                        if(item.isMoving()){
+                            mMap.setMyLocationEnabled(true);
                         }
-                        else if(item.isMoving()) {
-                            IconGenerator iconGenerator = new IconGenerator(GameActivity.this);
-                            Bitmap bmp;
-                            if(isTag) {
-                                bmp = iconGenerator.makeIcon(item.getName() + " " + item.getPoint() + "P");
-                            }
-                            else{
-                                bmp = iconGenerator.makeIcon(item.getName());
-                            }
-                            mMap.addMarker(new MarkerOptions().position(new LatLng(item.getGps().getLat(), item.getGps().getLng())).icon(BitmapDescriptorFactory.fromBitmap(bmp)));
+                        else{
+                            mMap.setMyLocationEnabled(false);
                         }
+                    }
+                    else if(item.isMoving()) {
+                        IconGenerator iconGenerator = new IconGenerator(GameActivity.this);
+                        Bitmap bmp;
+                        if(isTag) {
+                            bmp = iconGenerator.makeIcon(item.getName() + " " + item.getPoint() + "P");
+                        }
+                        else{
+                            bmp = iconGenerator.makeIcon(item.getName());
+                        }
+                        Marker marker = mMap.addMarker(new MarkerOptions().position(new LatLng(item.getGps().getLat(), item.getGps().getLng())).icon(BitmapDescriptorFactory.fromBitmap(bmp)));
+                        markersList.put(item.getId(), marker);
                     }
                 }
             });
