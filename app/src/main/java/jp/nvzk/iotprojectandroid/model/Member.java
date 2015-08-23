@@ -11,6 +11,7 @@ public class Member implements Serializable {
     private int point;
     private int status;
     private GPS gps;
+    private boolean isMoving;
 
     public String getName() {
         return name;
@@ -50,5 +51,13 @@ public class Member implements Serializable {
 
     public void setStatus(int status) {
         this.status = status;
+    }
+
+    public boolean isMoving() {
+        return isMoving;
+    }
+
+    public void setIsMoving(boolean isMoving) {
+        this.isMoving = isMoving;
     }
 }

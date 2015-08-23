@@ -289,6 +289,8 @@ public class MainActivity extends AppCompatActivity {
                     }
                     deviceListFirst.add(device);
                     deviceListFirstAdapter.notifyDataSetChanged();
+                    deviceListSecond.add(device);
+                    deviceListSecondAdapter.notifyDataSetChanged();
                 }
             });
         }

@@ -1,5 +1,7 @@
 package jp.nvzk.iotprojectandroid.model;
 
+import android.location.Location;
+
 /**
  * Created by user on 15/08/09.
  */
@@ -21,5 +23,10 @@ public class GPS {
 
     public void setLng(double lng) {
         this.lng = lng;
+    }
+
+    public void setLocation(Location location){
+        setLat(location.getLatitude());
+        setLng(location.getLongitude());
     }
 }
