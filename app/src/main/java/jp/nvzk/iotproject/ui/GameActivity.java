@@ -684,14 +684,16 @@ public class GameActivity extends AppCompatActivity {
 
                 if(startFlag && currentLocation != null) {
                     Sensor sensor = new Sensor();
-                    sensor.setSensor(bleByteData);
-                    GPS gps = new GPS();
-                    gps.setLocation(currentLocation);
-                    MyDevice myDevice = new MyDevice();
-                    myDevice.setSide(0);
-                    myDevice.setSensor(sensor);
-                    myDevice.setGps(gps);
-                    sendSensor(myDevice);
+                    try {
+                        sensor.setSensor(bleByteData);
+                        GPS gps = new GPS();
+                        gps.setLocation(currentLocation);
+                        MyDevice myDevice = new MyDevice();
+                        myDevice.setSide(0);
+                        myDevice.setSensor(sensor);
+                        myDevice.setGps(gps);
+                        sendSensor(myDevice);
+                    }catch (Exception e){}
                 }
 
             }
@@ -778,14 +780,16 @@ public class GameActivity extends AppCompatActivity {
 
                 if(startFlag) {
                     Sensor sensor = new Sensor();
-                    sensor.setSensor(bleByteData);
-                    GPS gps = new GPS();
-                    gps.setLocation(currentLocation);
-                    MyDevice myDevice = new MyDevice();
-                    myDevice.setSide(1);
-                    myDevice.setSensor(sensor);
-                    myDevice.setGps(gps);
-                    sendSensor(myDevice);
+                    try {
+                        sensor.setSensor(bleByteData);
+                        GPS gps = new GPS();
+                        gps.setLocation(currentLocation);
+                        MyDevice myDevice = new MyDevice();
+                        myDevice.setSide(1);
+                        myDevice.setSensor(sensor);
+                        myDevice.setGps(gps);
+                        sendSensor(myDevice);
+                    }catch (Exception e){}
                 }
 
             }

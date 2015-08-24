@@ -21,6 +21,7 @@ import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -35,9 +36,9 @@ import java.util.List;
 import java.util.UUID;
 
 import jp.nvzk.iotproject.Const;
-import jp.nvzk.iotproject.ui.adapter.DeviceListAdapter;
 import jp.nvzk.iotproject.R;
 import jp.nvzk.iotproject.model.Sensor;
+import jp.nvzk.iotproject.ui.adapter.DeviceListAdapter;
 import jp.nvzk.iotproject.util.ProfileUtil;
 
 
@@ -45,6 +46,12 @@ public class MainActivity extends AppCompatActivity {
 
     private final static int SDKVER_LOLLIPOP = 21;
     private final static int REQUEST_ENABLE_BT = 100;
+
+    private byte[] bleByteDataFirst;
+    private byte[] bleByteDataSecond;
+
+    private final int MESSAGE_FIRST = 0;
+    private final int MESSAGE_SECOND = 1;
 
     private BluetoothManager mBleManager;
     private BluetoothAdapter mBleAdapter;
@@ -339,6 +346,7 @@ public class MainActivity extends AppCompatActivity {
         {
             // Serviceが見つかったら実行.
             if (status == BluetoothGatt.GATT_SUCCESS) {
+
                 // UUIDが同じかどうかを確認する.
                 BluetoothGattService service = gatt.getService(UUID.fromString(Const.UUID_BLESERIAL_SERVICE));
                 if (service != null)
@@ -360,45 +368,6 @@ public class MainActivity extends AppCompatActivity {
                         descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
                         mBleGattFirst.writeDescriptor(descriptor);
 
-                        //デバイス決定、保存
-                        final BluetoothDevice device = gatt.getDevice();
-                        final byte[] bleByteData = mBleCharacteristic.getValue();
-                        Handler mHandler = new Handler();
-                        mHandler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                Sensor sensor = new Sensor();
-                                sensor.setSensor(bleByteData);
-
-                                switch(sensor.getSide()){
-                                    case 0:
-                                        if(isSetLeft) {
-                                            //TODO 既に設定されています。
-                                            return;
-                                        }
-                                        selectedTextFirst.setText(device.getName() + "\n" + getString(R.string.select_left));
-                                        isSetLeft = true;
-                                        ProfileUtil.setBluetoothDeviceLeft(device);
-                                        break;
-                                    case 1:
-                                        if(isSetRight){
-                                            //TODO 既に設定されています。
-                                            return;
-                                        }
-                                        selectedTextFirst.setText(device.getName() + "\n" + getString(R.string.select_right));
-                                        isSetRight = true;
-                                        ProfileUtil.setBluetoothDeviceRight(device);
-                                        break;
-                                }
-                                selectedTextFirst.setVisibility(View.VISIBLE);
-                                deviceListViewFirst.setVisibility(View.GONE);
-
-                                if(isSetLeft && isSetRight){
-                                    decideBtn.setEnabled(true);
-                                }
-                            }
-                        });
-
                         if (registered) {
                             // Characteristics通知設定が成功
                         } else {
@@ -413,6 +382,12 @@ public class MainActivity extends AppCompatActivity {
         {
             // キャラクタリスティックのUUIDをチェック(getUuidの結果が全て小文字で帰ってくるのでUpperCaseに変換)
             if (Const.UUID_BLESERIAL_RX.toUpperCase().equals(characteristic.getUuid().toString().toUpperCase())){
+                bleByteDataFirst = characteristic.getValue();
+
+                if(bleByteDataFirst != null) {
+                    // メインスレッドでTextViewに値をセットする.
+                    mBleHandler.sendEmptyMessage(MESSAGE_FIRST);
+                }
             }
         }
 
@@ -468,45 +443,6 @@ public class MainActivity extends AppCompatActivity {
                         descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
                         mBleGattSecond.writeDescriptor(descriptor);
 
-                        //デバイス決定、保存
-                        final BluetoothDevice device = gatt.getDevice();
-                        final byte[] bleByteData = mBleCharacteristic.getValue();
-                        Handler mHandler = new Handler();
-                        mHandler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                Sensor sensor = new Sensor();
-                                sensor.setSensor(bleByteData);
-
-                                switch(sensor.getSide()){
-                                    case 0:
-                                        if(isSetLeft) {
-                                            //TODO 既に設定されています。
-                                            return;
-                                        }
-                                        selectedTextSecond.setText(device.getName() + "\n" + getString(R.string.select_left));
-                                        isSetLeft = true;
-                                        ProfileUtil.setBluetoothDeviceLeft(device);
-                                        break;
-                                    case 1:
-                                        if(isSetRight){
-                                            //TODO 既に設定されています。
-                                            return;
-                                        }
-                                        selectedTextSecond.setText(device.getName() + "\n" + getString(R.string.select_right));
-                                        isSetRight = true;
-                                        ProfileUtil.setBluetoothDeviceRight(device);
-                                        break;
-                                }
-                                selectedTextSecond.setVisibility(View.VISIBLE);
-                                deviceListViewSecond.setVisibility(View.GONE);
-
-                                if(isSetLeft && isSetRight){
-                                    decideBtn.setEnabled(true);
-                                }
-                            }
-                        });
-
                         if (registered) {
                             // Characteristics通知設定が成功
                         } else {
@@ -521,6 +457,12 @@ public class MainActivity extends AppCompatActivity {
         {
             // キャラクタリスティックのUUIDをチェック(getUuidの結果が全て小文字で帰ってくるのでUpperCaseに変換)
             if (Const.UUID_BLESERIAL_RX.toUpperCase().equals(characteristic.getUuid().toString().toUpperCase())){
+                bleByteDataSecond = characteristic.getValue();
+
+                if(bleByteDataSecond != null) {
+                    // メインスレッドでTextViewに値をセットする.
+                    mBleHandler.sendEmptyMessage(MESSAGE_SECOND);
+                }
             }
         }
 
@@ -529,6 +471,91 @@ public class MainActivity extends AppCompatActivity {
 
         }
     };
+
+    /**
+     * キャラクタリスティックの受信に応じてUIスレッド処理
+     */
+    private Handler mBleHandler = new Handler(){
+        public void handleMessage(Message msg){
+            Sensor sensor = new Sensor();
+            // UIスレッドで実行する処理.
+            switch (msg.what){
+                case MESSAGE_FIRST:
+                    try {
+                        sensor.setSensor(bleByteDataFirst);
+                    }
+                    catch (Exception e){
+                        return;
+                    }
+                    switch((int)sensor.getSide()){
+                        case 0:
+                            if(isSetLeft) {
+                                //TODO 既に設定されています。
+                                return;
+                            }
+                            selectedTextFirst.setText(mBleGattFirst.getDevice().getName() + "\n" + getString(R.string.select_left));
+                            isSetLeft = true;
+                            ProfileUtil.setBluetoothDeviceLeft(mBleGattFirst.getDevice());
+                            break;
+                        case 1:
+                            if(isSetRight){
+                                //TODO 既に設定されています。
+                                return;
+                            }
+                            selectedTextFirst.setText(mBleGattFirst.getDevice().getName() + "\n" + getString(R.string.select_right));
+                            isSetRight = true;
+                            ProfileUtil.setBluetoothDeviceRight(mBleGattFirst.getDevice());
+                            break;
+                        default:
+                            //TODO 適応していないデバイスです
+                    }
+                    selectedTextFirst.setVisibility(View.VISIBLE);
+                    deviceListViewFirst.setVisibility(View.GONE);
+
+                    mBleGattFirst.close();
+                    mBleGattFirst = null;
+                    break;
+                case MESSAGE_SECOND:
+                    try {
+                        sensor.setSensor(bleByteDataSecond);
+                    }
+                    catch (Exception e){
+                        return;
+                    }
+                    switch(sensor.getSide()){
+                        case 0:
+                            if(isSetLeft) {
+                                //TODO 既に設定されています。
+                                return;
+                            }
+                            selectedTextSecond.setText(mBleGattSecond.getDevice().getName() + "\n" + getString(R.string.select_left));
+                            isSetLeft = true;
+                            ProfileUtil.setBluetoothDeviceLeft(mBleGattSecond.getDevice());
+                            break;
+                        case 1:
+                            if(isSetRight){
+                                //TODO 既に設定されています。
+                                return;
+                            }
+                            selectedTextSecond.setText(mBleGattSecond.getDevice().getName() + "\n" + getString(R.string.select_right));
+                            isSetRight = true;
+                            ProfileUtil.setBluetoothDeviceRight(mBleGattSecond.getDevice());
+                            break;
+                    }
+                    selectedTextSecond.setVisibility(View.VISIBLE);
+                    deviceListViewSecond.setVisibility(View.GONE);
+
+                    mBleGattSecond.close();
+                    mBleGattSecond = null;
+                    break;
+            }
+
+            if(isSetLeft && isSetRight){
+                decideBtn.setEnabled(true);
+            }
+        }
+    };
+
 
 
 
