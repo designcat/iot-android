@@ -8,4 +8,7 @@
     <color name="background">#f8fffd</color>
 
     <color name="light_yellow">#fcf8da8f</color>
+    <color name="white">#ffffff</color>
+
+    <color name="divider">#666666</color>
 </resources>

@@ -12,6 +12,7 @@ import android.widget.Button;
 import android.widget.EditText;
 
 import jp.nvzk.iotproject.R;
+import jp.nvzk.iotproject.ui.dialog.SingleFragment;
 import jp.nvzk.iotproject.util.ProfileUtil;
 
 /**
@@ -89,7 +90,8 @@ public class LoginActivity extends AppCompatActivity {
         public void onClick(View v) {
             if(ProfileUtil.getUserId().isEmpty()) {
                 if (idText.getText().toString().isEmpty() || nameText.getText().toString().isEmpty()) {
-                    //TODO 入力していない項目があります
+                    SingleFragment dialog = SingleFragment.getInstance(getString(R.string.dialog_error_empty));
+                    dialog.show(getSupportFragmentManager(), "empty");
                     return;
                 }
                 //TODO API送信
@@ -97,7 +99,8 @@ public class LoginActivity extends AppCompatActivity {
             }
             else{
                 if (nameText.getText().toString().isEmpty()) {
-                    //TODO 入力していない項目があります
+                    SingleFragment dialog = SingleFragment.getInstance(getString(R.string.dialog_error_empty));
+                    dialog.show(getSupportFragmentManager(), "empty");
                     return;
                 }
             }

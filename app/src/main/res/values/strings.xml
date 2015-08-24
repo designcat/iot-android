@@ -16,4 +16,19 @@
 
     <string name="error_select_device">選択したデバイスの左右が違います。</string>
 
+    <string name="btn_close">閉じる</string>
+    <string name="btn_cancel">キャンセル</string>
+    <string name="btn_ok">OK</string>
+
+    <string name="dialog_error_unavailable_bluetooth">ご利用の端末はBluetoothの規格に対応していません。</string>
+    <string name="dialog_error_already_set">既にそのデバイスは設定されています。</string>
+    <string name="dialog_error_unavailable_device">適応していないデバイスです。</string>
+    <string name="dialog_error_connect_device">デバイスの接続に失敗しました。</string>
+    <string name="dialog_error_empty">入力していない項目があります。</string>
+    <string name="dialog_your_turn">あなたが鬼になりました！</string>
+    <string name="dialog_change_to_citizen">市民になりました！</string>
+
+    <string name="oni">鬼</string>
+    <string name="citizen">市民</string>
+
 </resources>

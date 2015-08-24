@@ -19,7 +19,7 @@
             android:id="@+id/room_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="14dp"
+            android:textSize="14sp"
             android:text="部屋を選択して下さい。"
             android:gravity="center_horizontal"
             android:layout_margin="16dp"/>

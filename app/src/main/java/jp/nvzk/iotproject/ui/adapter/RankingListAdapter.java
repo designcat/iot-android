@@ -96,7 +96,7 @@ public class RankingListAdapter extends BaseAdapter {
 
         holder.rank.setText((position + 1) + ".");
         holder.name.setText(member.getName());
-        holder.point.setText(member.getPoint() + " P");
+        holder.point.setText(member.getPoint() + " pt");
 
         return convertView;
     }

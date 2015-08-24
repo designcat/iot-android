@@ -15,7 +15,6 @@ import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
@@ -39,25 +38,24 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import com.google.maps.android.ui.IconGenerator;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.lang.reflect.Type;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
@@ -70,6 +68,7 @@ import jp.nvzk.iotproject.model.MyData;
 import jp.nvzk.iotproject.model.MyDevice;
 import jp.nvzk.iotproject.model.Sensor;
 import jp.nvzk.iotproject.ui.adapter.MemberListAdapter;
+import jp.nvzk.iotproject.ui.dialog.SingleFragment;
 import jp.nvzk.iotproject.util.ProfileUtil;
 import jp.nvzk.iotproject.util.SocketUtil;
 
@@ -82,21 +81,24 @@ import static java.lang.Math.sin;
  * Created by user on 15/08/10.
  */
 public class GameActivity extends AppCompatActivity {
-    SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+    DateFormat sdf = new SimpleDateFormat("HH:mm:ss");
     private long readyTime = 30000;
-    private long gameTime = 10 * 60 * 1000;
+    private long gameTime = 1 * 60 * 1000;
 
     private Timer readyTimer = new Timer(true);
     private Timer gameTimer = new Timer(true);
+    private Timer testTimer = new Timer(true);
 
     private GoogleMap mMap;
     private final int zoomLevel = 18;
     private Location currentLocation;
     private double tagRange = 10;
     private Map<String, Marker> markersList = new HashMap<>();
+    private Marker currentMarker;
 
     private Socket socket;
-    private boolean startFlag;
+    //TODO !!
+    private boolean startFlag = true;
 
     private final static int SDKVER_LOLLIPOP = 21;
     private final static int MESSAGE_NEW_RECEIVEDNUM = 0;
@@ -115,6 +117,7 @@ public class GameActivity extends AppCompatActivity {
     private ListView memberListView;
     private List<Member> memberList = new ArrayList<>();
     private MemberListAdapter memberListAdapter;
+    BitmapDescriptor currentIcon;
 
     private TextView statusText;
     private TextView pointText;
@@ -124,9 +127,14 @@ public class GameActivity extends AppCompatActivity {
     private boolean isTag = false;
     private String cannotSendId = "";
     private boolean connectRight;
-    private boolean connectLeft;
+    //TODO !!
+    private boolean connectLeft = true;
 
     private int roomId;
+
+    private int pointTest;
+    private Location testLocation;
+    private Handler mHandler = new Handler();
 
 
     @Override
@@ -172,8 +180,13 @@ public class GameActivity extends AppCompatActivity {
         if(gameTimer != null){
             gameTimer.cancel();
         }
+        if(testTimer != null){
+            testTimer.cancel();
+        }
 
-        socket.disconnect();
+        if(socket != null) {
+            socket.disconnect();
+        }
 
         if (Build.VERSION.SDK_INT >= SDKVER_LOLLIPOP)
         {
@@ -215,7 +228,8 @@ public class GameActivity extends AppCompatActivity {
         if (event.getAction()==KeyEvent.ACTION_DOWN) {
             switch (event.getKeyCode()) {
                 case KeyEvent.KEYCODE_BACK:
-                    return true;
+                    finish();
+                    return false;
             }
         }
         return super.dispatchKeyEvent(event);
@@ -234,7 +248,6 @@ public class GameActivity extends AppCompatActivity {
         pointText = (TextView) findViewById(R.id.map_point);
         timeText = (TextView) findViewById(R.id.map_time);
         readyText = (TextView) findViewById(R.id.ready_timer);
-
     }
 
     /**
@@ -256,9 +269,11 @@ public class GameActivity extends AppCompatActivity {
      * socket.ioの準備
      */
     private void initSocket(){
+        System.out.println("socket");
         if(!connectRight || !connectLeft){
             return;
         }
+        startBtn.setEnabled(true);
 
         socket = SocketUtil.getSocket();
 
@@ -282,7 +297,7 @@ public class GameActivity extends AppCompatActivity {
         ).on("finish", new Emitter.Listener() {
             @Override
             public void call(Object... args) {
-                JSONObject data = (JSONObject) args[0];
+                /*JSONObject data = (JSONObject) args[0];
                 Gson gson = new Gson();
                 Type collectionType = new TypeToken<Collection<Member>>() {
                 }.getType();
@@ -290,7 +305,7 @@ public class GameActivity extends AppCompatActivity {
                 Intent intent = new Intent(GameActivity.this, RankingActivity.class);
                 intent.putExtra(Const.KEY.MEMBERS, members);
                 startActivity(intent);
-                finish();
+                finish();*/
             }
         }).on("disconnected", new Emitter.Listener() {
 
@@ -315,7 +330,7 @@ public class GameActivity extends AppCompatActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    JSONObject data = (JSONObject) args[0];
+                    /*JSONObject data = (JSONObject) args[0];
                     Gson gson = new Gson();
                     Type collectionType = new TypeToken<Collection<Member>>() {
                     }.getType();
@@ -338,7 +353,7 @@ public class GameActivity extends AppCompatActivity {
                         }
                         memberList.add(item);
                         memberListAdapter.notifyDataSetChanged();
-                    }
+                    }*/
                 }
             });
         }
@@ -347,7 +362,7 @@ public class GameActivity extends AppCompatActivity {
     private Emitter.Listener onDisconnectMember = new Emitter.Listener() {
         @Override
         public void call(final Object... args) {
-            runOnUiThread(new Runnable() {
+            /*runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     JSONObject data = (JSONObject) args[0];
@@ -361,7 +376,7 @@ public class GameActivity extends AppCompatActivity {
                         }
                     }
                 }
-            });
+            });*/
         }
     };
 
@@ -371,7 +386,7 @@ public class GameActivity extends AppCompatActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    findViewById(R.id.member_layout).setVisibility(View.GONE);
+                    /*findViewById(R.id.member_layout).setVisibility(View.GONE);
 
                     readyTimer.schedule(new TimerTask() {
                         @Override
@@ -383,9 +398,10 @@ public class GameActivity extends AppCompatActivity {
                                 readyTimer.cancel();
                                 readyTimer = null;
                             }
+                            sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
                             readyText.setText(sdf.format(readyTime));
                         }
-                    }, 0, 1000);
+                    }, 0, 1000);*/
                 }
             });
         }
@@ -397,6 +413,7 @@ public class GameActivity extends AppCompatActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
+                    /*findViewById(R.id.member_layout).setVisibility(View.GONE);
                     findViewById(R.id.map_overlay_layout).setVisibility(View.GONE);
                     startFlag = true;
 
@@ -410,12 +427,13 @@ public class GameActivity extends AppCompatActivity {
                         if(item.getId().equals(ProfileUtil.getUserId())){
                             switch (item.getStatus()){
                                 case 0:
-                                    statusText.setText("市民");
+                                    statusText.setText(getString(R.string.citizen));
                                     break;
                                 case 1:
-                                    statusText.setText("鬼");
+                                    statusText.setText(getString(R.string.oni));
                                     isTag = true;
-                                    //TODO あなたが鬼ですダイアログ
+                                    SingleFragment dialog = SingleFragment.getInstance(getString(R.string.dialog_your_turn));
+                                    dialog.show(getSupportFragmentManager(), "tag");
                                     break;
                             }
                             break;
@@ -431,9 +449,10 @@ public class GameActivity extends AppCompatActivity {
                                 gameTimer.cancel();
                                 gameTimer = null;
                             }
+                            sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
                             timeText.setText(sdf.format(gameTime));
                         }
-                    }, 0, 1000);
+                    }, 0, 1000);*/
                 }
             });
         }
@@ -445,7 +464,7 @@ public class GameActivity extends AppCompatActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    JSONObject data = (JSONObject) args[0];
+                    /*JSONObject data = (JSONObject) args[0];
                     Gson gson = new Gson();
                     Member item = gson.fromJson(new Gson().toJson(data), Member.class);
 
@@ -463,26 +482,27 @@ public class GameActivity extends AppCompatActivity {
                     }
 
                     if(item.getId().equals(ProfileUtil.getUserId())) {
-                        pointText.setText(item.getPoint() + "P");
+                        pointText.setText(item.getPoint() + " pt");
+                        //TODO やり方かえる
                         if(item.isMoving()){
-                            mMap.setMyLocationEnabled(true);
+                            //mMap.setMyLocationEnabled(true);
                         }
                         else{
-                            mMap.setMyLocationEnabled(false);
+                            //mMap.setMyLocationEnabled(false);
                         }
                     }
                     else if(item.isMoving()) {
                         IconGenerator iconGenerator = new IconGenerator(GameActivity.this);
                         Bitmap bmp;
                         if(isTag) {
-                            bmp = iconGenerator.makeIcon(item.getName() + " " + item.getPoint() + "P");
+                            bmp = iconGenerator.makeIcon(item.getName() + " " + item.getPoint() + " pt");
                         }
                         else{
                             bmp = iconGenerator.makeIcon(item.getName());
                         }
                         Marker marker = mMap.addMarker(new MarkerOptions().position(new LatLng(item.getGps().getLat(), item.getGps().getLng())).icon(BitmapDescriptorFactory.fromBitmap(bmp)));
                         markersList.put(item.getId(), marker);
-                    }
+                    }*/
                 }
             });
         }
@@ -506,20 +526,36 @@ public class GameActivity extends AppCompatActivity {
                     }
                     if(toUserId.equals(ProfileUtil.getUserId())) {
                         cannotSendId = fromUserId;
-                        statusText.setText("鬼");
+                        statusText.setText(getString(R.string.oni));
                         isTag = true;
-                        //TODO あなたが鬼ですダイアログ
+                        SingleFragment dialog = SingleFragment.getInstance(getString(R.string.dialog_your_turn));
+                        dialog.show(getSupportFragmentManager(), "tag");
                     }
                     else if(fromUserId.equals(ProfileUtil.getUserId())) {
                         cannotSendId = "";
-                        //TODO 市民になりました
-                        statusText.setText("市民");
+                        statusText.setText(getString(R.string.citizen));
                         isTag = false;
+                        SingleFragment dialog = SingleFragment.getInstance(getString(R.string.dialog_change_to_citizen));
+                        dialog.show(getSupportFragmentManager(), "tag");
                     }
                 }
             });
         }
     };
+
+    /*-----------------------
+    iroiro
+    ------------------------ */
+    private void setMemberList(){
+
+        Member member = new Member();
+        member.setName(ProfileUtil.getUserName());
+
+        memberList.add(member);
+        memberListAdapter.notifyDataSetChanged();
+
+    }
+
 
     /*-------------------------
     Bleutooth
@@ -538,10 +574,12 @@ public class GameActivity extends AppCompatActivity {
         }
         else
         {
+            //TODO 追々！
+            setMemberList();
             // BLEが使用可能ならスキャン開始.
-            scanNewDevice();
+            //scanNewDevice();
             //デバイスと接続開始
-            mBleGattLeft = ProfileUtil.getBluetoothDeviceLeft().connectGatt(getApplicationContext(), false, mGattCallbackLeft);
+            //mBleGattLeft = ProfileUtil.getBluetoothDeviceLeft().connectGatt(getApplicationContext(), false, mGattCallbackLeft);
             mBleGattRight = ProfileUtil.getBluetoothDeviceRight().connectGatt(getApplicationContext(), false, mGattCallbackRight);
         }
     }
@@ -620,8 +658,8 @@ public class GameActivity extends AppCompatActivity {
                 // 接続に成功したらサービスを検索する.
                 gatt.discoverServices();
                 if(!connectLeft) {
-                    initSocket();
                     connectLeft = true;
+                    initSocket();
                 }
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 // 接続が切れたらGATTを空にする.
@@ -631,7 +669,15 @@ public class GameActivity extends AppCompatActivity {
                     mBleGattLeft = null;
                 }
                 if(!connectLeft){
-                    //TODO 接続できませんでした
+                    //接続失敗
+                    SingleFragment dialog = SingleFragment.getInstance(getString(R.string.dialog_error_connect_device));
+                    dialog.setCloseListener(new SingleFragment.OnCloseListener() {
+                        @Override
+                        public void onClose() {
+                            finish();
+                        }
+                    });
+                    dialog.show(getSupportFragmentManager(), "connect");
                 }
             }
         }
@@ -677,6 +723,7 @@ public class GameActivity extends AppCompatActivity {
             if (Const.UUID_BLESERIAL_RX.toUpperCase().equals(characteristic.getUuid().toString().toUpperCase()))
             {
                 byte[] bleByteData = characteristic.getValue();
+                System.out.println(bleByteData[1]);
                 // Peripheralで値が更新されたらNotificationを受ける.
                 mStrReceivedNum = characteristic.getStringValue(0);
                 // メインスレッドでTextViewに値をセットする.
@@ -686,14 +733,25 @@ public class GameActivity extends AppCompatActivity {
                     Sensor sensor = new Sensor();
                     try {
                         sensor.setSensor(bleByteData);
-                        GPS gps = new GPS();
-                        gps.setLocation(currentLocation);
-                        MyDevice myDevice = new MyDevice();
-                        myDevice.setSide(0);
-                        myDevice.setSensor(sensor);
-                        myDevice.setGps(gps);
-                        sendSensor(myDevice);
-                    }catch (Exception e){}
+                    }
+                    catch (Exception e) {
+                        return;
+                    }
+                    GPS gps = new GPS();
+                    gps.setLocation(currentLocation);
+                    MyDevice myDevice = new MyDevice();
+                    myDevice.setSide(0);
+                    myDevice.setSensor(sensor);
+                    myDevice.setGps(gps);
+                    Gson gson = new Gson();
+                    String str = gson.toJson(myDevice);
+                    System.out.println(str);
+                    try {
+                        JSONObject jsonObject = new JSONObject(str);
+                        socket.emit("footprint", jsonObject);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
                 }
 
             }
@@ -712,13 +770,14 @@ public class GameActivity extends AppCompatActivity {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState)
         {
+
             // 接続状況が変化したら実行.
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 // 接続に成功したらサービスを検索する.
                 gatt.discoverServices();
                 if(!connectRight) {
-                    initSocket();
                     connectRight = true;
+                    initSocket();
                 }
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 // 接続が切れたらGATTを空にする.
@@ -727,7 +786,15 @@ public class GameActivity extends AppCompatActivity {
                     mBleGattRight = null;
                 }
                 if(!connectRight){
-                    //TODO 接続できませんでした
+                    //接続失敗
+                    SingleFragment dialog = SingleFragment.getInstance(getString(R.string.dialog_error_connect_device));
+                    dialog.setCloseListener(new SingleFragment.OnCloseListener() {
+                        @Override
+                        public void onClose() {
+                            finish();
+                        }
+                    });
+                    dialog.show(getSupportFragmentManager(), "connect");
                 }
             }
         }
@@ -779,19 +846,30 @@ public class GameActivity extends AppCompatActivity {
                 mBleHandler.sendEmptyMessage(MESSAGE_NEW_RECEIVEDNUM);
 
                 if(startFlag) {
+
                     Sensor sensor = new Sensor();
                     try {
                         sensor.setSensor(bleByteData);
-                        GPS gps = new GPS();
-                        gps.setLocation(currentLocation);
-                        MyDevice myDevice = new MyDevice();
-                        myDevice.setSide(1);
-                        myDevice.setSensor(sensor);
-                        myDevice.setGps(gps);
-                        sendSensor(myDevice);
-                    }catch (Exception e){}
+                    }
+                    catch (Exception e) {
+                        return;
+                    }
+                    GPS gps = new GPS();
+                    gps.setLocation(currentLocation);
+                    MyDevice myDevice = new MyDevice();
+                    myDevice.setSide(1);
+                    myDevice.setSensor(sensor);
+                    myDevice.setGps(gps);
+                    Gson gson = new Gson();
+                    String str = gson.toJson(myDevice);
+                    System.out.println(str);
+                    try {
+                        JSONObject jsonObject = new JSONObject(str);
+                        socket.emit("footprint", jsonObject);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
                 }
-
             }
         }
 
@@ -804,10 +882,8 @@ public class GameActivity extends AppCompatActivity {
     /**
      * キャラクタリスティックの受信に応じてUIスレッド処理
      */
-    private Handler mBleHandler = new Handler()
-    {
-        public void handleMessage(Message msg)
-        {
+    private Handler mBleHandler = new Handler(){
+        public void handleMessage(Message msg){
             // UIスレッドで実行する処理.
             switch (msg.what)
             {
@@ -863,9 +939,9 @@ public class GameActivity extends AppCompatActivity {
      */
     private void setUpMap(){
         try{
-            mMap.setOnMyLocationChangeListener(locationChangeListener);
-
             mMap.setMyLocationEnabled(true);
+            mMap.setOnMyLocationChangeListener(locationChangeListener);
+            mMap.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
             mMap.getUiSettings().setMyLocationButtonEnabled(true);
             mMap.getUiSettings().setCompassEnabled(true);
             mMap.getUiSettings().setZoomControlsEnabled(false);
@@ -880,6 +956,66 @@ public class GameActivity extends AppCompatActivity {
         }
         catch (Exception ignored){
         }
+
+        currentIcon = BitmapDescriptorFactory.fromResource(R.drawable.green);
+    }
+
+    private void doMap(){
+        findViewById(R.id.member_layout).setVisibility(View.GONE);
+        findViewById(R.id.map_overlay_layout).setVisibility(View.GONE);
+
+        gameTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                if (gameTime > 0) {
+                    gameTime -= 1000;
+                } else {
+                    ArrayList<Member> members = new ArrayList<Member>();
+                    Member member = new Member();
+                    member.setName(ProfileUtil.getUserName());
+                    member.setPoint(pointTest);
+                    members.add(member);
+                    Intent intent = new Intent(GameActivity.this, RankingActivity.class);
+                    intent.putExtra(Const.KEY.MEMBERS, members);
+                    startActivity(intent);
+                    finish();
+                }
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+                        timeText.setText(sdf.format(gameTime));
+                    }
+                });
+            }
+        }, 0, 1000);
+
+        testTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (testLocation != null && currentLocation != null) {
+                            double speed = getDistance(currentLocation.getLatitude(), currentLocation.getLongitude(), testLocation.getLatitude(), testLocation.getLongitude());
+                            if (speed < 0.5d) {
+                                if(currentMarker != null) {
+                                    currentMarker.setVisible(false);
+                                }
+
+                            } else {
+                                if(currentMarker != null) {
+                                    currentMarker.setVisible(true);
+                                }
+                                pointTest += (int)(speed * 10d);
+                                pointText.setText(pointTest + " pt");
+                            }
+                        }
+                        testLocation = currentLocation;
+                    }
+                });
+            }
+        }, 500, 1000);
     }
 
     /**
@@ -888,11 +1024,15 @@ public class GameActivity extends AppCompatActivity {
     private GoogleMap.OnMyLocationChangeListener locationChangeListener = new GoogleMap.OnMyLocationChangeListener(){
 
         @Override
-        public void onMyLocationChange(Location location) {
+        public void onMyLocationChange(final Location location) {
             if(location != null) {
                 currentLocation = location;
                 CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLng(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()));
                 mMap.animateCamera(cameraUpdate);
+                if(currentMarker != null){
+                    currentMarker.remove();
+                }
+                currentMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude())).icon(currentIcon).anchor(0.5f, 0.5f));
             }
         }
     };
@@ -928,8 +1068,10 @@ public class GameActivity extends AppCompatActivity {
     private View.OnClickListener mOnClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            //TODO 始めたら知らせる
-            socket.emit("startTimer", 1);
+            //TODO なにかしら開始合図を送る
+            //socket.emit("startTimer", 1);
+            doMap();
+
         }
     };
 }

@@ -20,7 +20,7 @@
             android:id="@+id/ranking_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="14dp"
+            android:textSize="14sp"
             android:text="ゲーム終了しました"
             android:gravity="center_horizontal"
             android:layout_margin="16dp"/>

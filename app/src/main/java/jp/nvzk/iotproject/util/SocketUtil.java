@@ -5,6 +5,8 @@ import com.github.nkzawa.socketio.client.Socket;
 
 import java.net.URISyntaxException;
 
+import jp.nvzk.iotproject.Const;
+
 /**
  * Created by user on 15/08/09.
  */
@@ -14,7 +16,7 @@ public class SocketUtil {
 
     public static void initSocket(){
         try {
-            socket = IO.socket("http://localhost");
+            socket = IO.socket(Const.SOCKET_URL);
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
