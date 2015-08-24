@@ -58,6 +58,26 @@ public class ProfileUtil {
         return gson.fromJson(string, BluetoothDevice.class);
     }
 
+    public static boolean haveDeviceLeft(){
+        String string = sSetting.getString("DEVICE_LEFT", "");
+        if(string.isEmpty()){
+            return false;
+        }
+        else{
+            return true;
+        }
+    }
+
+    public static boolean haveDeviceRight(){
+        String string = sSetting.getString("DEVICE_RIGHT", "");
+        if(string.isEmpty()){
+            return false;
+        }
+        else{
+            return true;
+        }
+    }
+
     public static void setBluetoothDeviceLeft(BluetoothDevice device){
         Gson gson = new Gson();
         sEditor.putString("DEVICE_LEFT", gson.toJson(device)).commit();

@@ -118,7 +118,7 @@ public class MainActivity extends AppCompatActivity {
         reselectBtn.setOnClickListener(mOnReselectClickListener);
         decideBtn = (Button) findViewById(R.id.main_decide_btn);
         decideBtn.setOnClickListener(mOnDecideClickListener);
-        decideBtn.setEnabled(false);
+        decideBtn.setEnabled(true);
 
         selectedTextFirst = (TextView)findViewById(R.id.main_select_text1);
         selectedTextSecond = (TextView)findViewById(R.id.main_select_text2);
@@ -134,13 +134,13 @@ public class MainActivity extends AppCompatActivity {
         deviceListSecond.clear();
         deviceListSecondAdapter.notifyDataSetChanged();
 
-        if(ProfileUtil.getBluetoothDeviceLeft() != null){
+        if(ProfileUtil.haveDeviceLeft()){
             deviceListFirst.add(ProfileUtil.getBluetoothDeviceLeft());
             deviceListFirstAdapter.notifyDataSetChanged();
             deviceListSecond.add(ProfileUtil.getBluetoothDeviceLeft());
             deviceListSecondAdapter.notifyDataSetChanged();
         }
-        if(ProfileUtil.getBluetoothDeviceRight() != null){
+        if(ProfileUtil.haveDeviceRight()){
             deviceListFirst.add(ProfileUtil.getBluetoothDeviceRight());
             deviceListFirstAdapter.notifyDataSetChanged();
             deviceListSecond.add(ProfileUtil.getBluetoothDeviceRight());
@@ -179,7 +179,8 @@ public class MainActivity extends AppCompatActivity {
         selectedTextSecond.setVisibility(View.GONE);
         isSetRight = false;
         isSetLeft = false;
-        decideBtn.setEnabled(false);
+        //TODO !!
+        decideBtn.setEnabled(true);
 
         if (Build.VERSION.SDK_INT >= SDKVER_LOLLIPOP)
         {
@@ -663,7 +664,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     };
-
 
 
 

@@ -273,9 +273,10 @@ public class GameActivity extends AppCompatActivity {
         if(!connectRight || !connectLeft){
             return;
         }
-        startBtn.setEnabled(true);
+        System.out.print("initSocket");
 
         socket = SocketUtil.getSocket();
+        System.out.println(socket);
 
         socket.on("connected", new Emitter.Listener() {
 
@@ -322,6 +323,7 @@ public class GameActivity extends AppCompatActivity {
 
     private void sendSensor(MyDevice myDevice){
         socket.emit("footprint", myDevice);
+        System.out.println("send");
     }
 
     private Emitter.Listener onReceiveMemberList = new Emitter.Listener() {
@@ -554,6 +556,8 @@ public class GameActivity extends AppCompatActivity {
         memberList.add(member);
         memberListAdapter.notifyDataSetChanged();
 
+        startBtn.setEnabled(true);
+
     }
 
 
@@ -662,6 +666,7 @@ public class GameActivity extends AppCompatActivity {
                     initSocket();
                 }
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                System.out.println("unConnect");
                 // 接続が切れたらGATTを空にする.
                 if (mBleGattLeft != null)
                 {
@@ -742,12 +747,14 @@ public class GameActivity extends AppCompatActivity {
                     MyDevice myDevice = new MyDevice();
                     myDevice.setSide(0);
                     myDevice.setSensor(sensor);
+                    System.out.println(sensor.getPressure_thumb());
                     myDevice.setGps(gps);
                     Gson gson = new Gson();
                     String str = gson.toJson(myDevice);
                     System.out.println(str);
                     try {
                         JSONObject jsonObject = new JSONObject(str);
+                        System.out.println(jsonObject.get("gps").toString());
                         socket.emit("footprint", jsonObject);
                     } catch (JSONException e) {
                         e.printStackTrace();
@@ -773,13 +780,16 @@ public class GameActivity extends AppCompatActivity {
 
             // 接続状況が変化したら実行.
             if (newState == BluetoothProfile.STATE_CONNECTED) {
+                System.out.println("Connect");
                 // 接続に成功したらサービスを検索する.
                 gatt.discoverServices();
                 if(!connectRight) {
+                    System.out.println("init");
                     connectRight = true;
                     initSocket();
                 }
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                System.out.println("unConnect");
                 // 接続が切れたらGATTを空にする.
                 if (mBleGattRight != null) {
                     mBleGattRight.close();
@@ -807,8 +817,11 @@ public class GameActivity extends AppCompatActivity {
                 BluetoothGattService service = gatt.getService(UUID.fromString(Const.UUID_BLESERIAL_SERVICE));
                 if (service != null)
                 {
+                    System.out.println("discoverd");
                     // 指定したUUIDを持つCharacteristicを確認する.
                     BluetoothGattCharacteristic mBleCharacteristic = service.getCharacteristic(UUID.fromString(Const.UUID_BLESERIAL_RX));
+
+                    System.out.println(mBleCharacteristic);
 
                     if (mBleCharacteristic != null) {
                         // Service, CharacteristicのUUIDが同じならBluetoothGattを更新する.
@@ -859,12 +872,14 @@ public class GameActivity extends AppCompatActivity {
                     MyDevice myDevice = new MyDevice();
                     myDevice.setSide(1);
                     myDevice.setSensor(sensor);
+                    System.out.println(sensor.getPressure_thumb());
                     myDevice.setGps(gps);
                     Gson gson = new Gson();
                     String str = gson.toJson(myDevice);
                     System.out.println(str);
                     try {
                         JSONObject jsonObject = new JSONObject(str);
+                        System.out.println(jsonObject.get("gps").toString());
                         socket.emit("footprint", jsonObject);
                     } catch (JSONException e) {
                         e.printStackTrace();
