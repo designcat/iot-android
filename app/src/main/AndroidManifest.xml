@@ -20,6 +20,7 @@
     <!-- 追加パーミッション２：現在位置取得のため -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_UPDATES" />
 
     <!-- 追加パーミッション３：Google Mapsの動作に必要 -->
     <uses-permission android:name="android.permission.INTERNET" />
@@ -35,7 +36,7 @@
     <application
         android:name=".App"
         android:allowBackup="true"
-        android:icon="@drawable/ic_launcher"
+        android:icon="@drawable/ic_logo"
         android:label="@string/app_name"
         android:theme="@style/MyTheme"
         android:largeHeap="true">
@@ -49,7 +50,7 @@
             android:value="AIzaSyCEDjr70k9_mVRGVwKNno4yRl6TBeWGfOc" />
 
         <activity
-            android:name=".ui.MainActivity"
+            android:name=".ui.LoginActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait">
             <intent-filter>
@@ -58,7 +59,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".ui.LoginActivity"
+        <activity android:name=".ui.MainActivity"
                   android:screenOrientation="portrait"/>
         <activity android:name=".ui.RoomActivity"
                   android:screenOrientation="portrait"/>

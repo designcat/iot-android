@@ -15,7 +15,9 @@ import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -41,10 +43,12 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.GroundOverlayOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.gson.Gson;
+import com.google.maps.android.ui.IconGenerator;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -68,6 +72,7 @@ import jp.nvzk.iotproject.model.MyData;
 import jp.nvzk.iotproject.model.MyDevice;
 import jp.nvzk.iotproject.model.Sensor;
 import jp.nvzk.iotproject.ui.adapter.MemberListAdapter;
+import jp.nvzk.iotproject.ui.dialog.SimpleFragment;
 import jp.nvzk.iotproject.ui.dialog.SingleFragment;
 import jp.nvzk.iotproject.util.ProfileUtil;
 import jp.nvzk.iotproject.util.SocketUtil;
@@ -95,6 +100,7 @@ public class GameActivity extends AppCompatActivity {
     private double tagRange = 10;
     private Map<String, Marker> markersList = new HashMap<>();
     private Marker currentMarker;
+    private LocationManager locationManager;
 
     private Socket socket;
     //TODO !!
@@ -129,6 +135,9 @@ public class GameActivity extends AppCompatActivity {
     private boolean connectRight;
     //TODO !!
     private boolean connectLeft = true;
+
+    private SimpleFragment gpsFragment;
+    private SimpleFragment deviceFragment;
 
     private int roomId;
 
@@ -210,6 +219,8 @@ public class GameActivity extends AppCompatActivity {
             mBleGattRight.close();
             mBleGattRight = null;
         }
+
+        locationManager.removeUpdates(locationListener);
         super.onDestroy();
     }
 
@@ -237,7 +248,7 @@ public class GameActivity extends AppCompatActivity {
 
     public void initView(){
         startBtn = (Button) findViewById(R.id.member_start_btn);
-        startBtn.setEnabled(false);
+        startBtn.setEnabled(true);
         startBtn.setOnClickListener(mOnClickListener);
 
         memberListView = (ListView) findViewById(R.id.member_list_view);
@@ -248,6 +259,9 @@ public class GameActivity extends AppCompatActivity {
         pointText = (TextView) findViewById(R.id.map_point);
         timeText = (TextView) findViewById(R.id.map_time);
         readyText = (TextView) findViewById(R.id.ready_timer);
+
+        gpsFragment = SimpleFragment.getInstance(getString(R.string.dialog_ready_gps));
+        gpsFragment.show(getSupportFragmentManager(), "gps");
     }
 
     /**
@@ -273,7 +287,10 @@ public class GameActivity extends AppCompatActivity {
         if(!connectRight || !connectLeft){
             return;
         }
-        System.out.print("initSocket");
+        if(deviceFragment != null) {
+            deviceFragment.dismiss();
+            deviceFragment = null;
+        }
 
         socket = SocketUtil.getSocket();
         System.out.println(socket);
@@ -555,9 +572,6 @@ public class GameActivity extends AppCompatActivity {
 
         memberList.add(member);
         memberListAdapter.notifyDataSetChanged();
-
-        startBtn.setEnabled(true);
-
     }
 
 
@@ -584,7 +598,9 @@ public class GameActivity extends AppCompatActivity {
             //scanNewDevice();
             //デバイスと接続開始
             //mBleGattLeft = ProfileUtil.getBluetoothDeviceLeft().connectGatt(getApplicationContext(), false, mGattCallbackLeft);
-            mBleGattRight = ProfileUtil.getBluetoothDeviceRight().connectGatt(getApplicationContext(), false, mGattCallbackRight);
+            //mBleGattRight = ProfileUtil.getBluetoothDeviceRight().connectGatt(getApplicationContext(), false, mGattCallbackRight);
+            //deviceFragment = SimpleFragment.getInstance(getString(R.string.dialog_ready_device));
+            //deviceFragment.show(getSupportFragmentManager(), "left");
         }
     }
 
@@ -675,6 +691,10 @@ public class GameActivity extends AppCompatActivity {
                 }
                 if(!connectLeft){
                     //接続失敗
+                    if(deviceFragment != null){
+                        deviceFragment.dismiss();
+                        deviceFragment = null;
+                    }
                     SingleFragment dialog = SingleFragment.getInstance(getString(R.string.dialog_error_connect_device));
                     dialog.setCloseListener(new SingleFragment.OnCloseListener() {
                         @Override
@@ -797,6 +817,10 @@ public class GameActivity extends AppCompatActivity {
                 }
                 if(!connectRight){
                     //接続失敗
+                    if(deviceFragment != null){
+                        deviceFragment.dismiss();
+                        deviceFragment = null;
+                    }
                     SingleFragment dialog = SingleFragment.getInstance(getString(R.string.dialog_error_connect_device));
                     dialog.setCloseListener(new SingleFragment.OnCloseListener() {
                         @Override
@@ -942,9 +966,18 @@ public class GameActivity extends AppCompatActivity {
         }
         CameraPosition.Builder builder = new CameraPosition.Builder();
 
+        LatLng center = new LatLng(lat, lng);
         builder.target(new LatLng(lat, lng));
+
         builder.zoom(zoomLevel);
         mMap.moveCamera(CameraUpdateFactory.newCameraPosition(builder.build()));
+
+        //オーバーレイ
+        GroundOverlayOptions newarkMap = new GroundOverlayOptions()
+                .image(BitmapDescriptorFactory.fromResource(R.drawable.map_overlay))
+                .position(center, 10000f, 10000f)
+                .transparency(0.7F);
+        mMap.addGroundOverlay(newarkMap);
 
         setUpMap();
     }
@@ -954,10 +987,10 @@ public class GameActivity extends AppCompatActivity {
      */
     private void setUpMap(){
         try{
-            mMap.setMyLocationEnabled(true);
-            mMap.setOnMyLocationChangeListener(locationChangeListener);
-            mMap.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
-            mMap.getUiSettings().setMyLocationButtonEnabled(true);
+            mMap.setMyLocationEnabled(false);
+            //mMap.setOnMyLocationChangeListener(locationChangeListener);
+            mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+            mMap.getUiSettings().setMyLocationButtonEnabled(false);
             mMap.getUiSettings().setCompassEnabled(true);
             mMap.getUiSettings().setZoomControlsEnabled(false);
 
@@ -972,8 +1005,57 @@ public class GameActivity extends AppCompatActivity {
         catch (Exception ignored){
         }
 
+        IconGenerator iconGenerator = new IconGenerator(GameActivity.this);
+        Bitmap bmp;
+        if(isTag) {
+            bmp = iconGenerator.makeIcon(ProfileUtil.getUserName() + " " + pointTest + " pt");
+        }
+        else{
+            bmp = iconGenerator.makeIcon(ProfileUtil.getUserName());
+        }
         currentIcon = BitmapDescriptorFactory.fromResource(R.drawable.green);
+        //currentIcon = BitmapDescriptorFactory.fromBitmap(bmp);
+
+        locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
+        locationManager.requestLocationUpdates(
+                LocationManager.GPS_PROVIDER, //LocationManager.NETWORK_PROVIDER,
+                1000, // 通知のための最小時間間隔（ミリ秒）
+                0, // 通知のための最小距離間隔（メートル）
+                locationListener
+        );
     }
+
+
+    private LocationListener locationListener = new LocationListener() {
+        @Override
+        public void onLocationChanged(Location location) {
+            if(gpsFragment != null){
+                gpsFragment.dismiss();
+                gpsFragment = null;
+            }
+            if(location != null) {
+                currentLocation = location;
+                CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLng(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()));
+                mMap.animateCamera(cameraUpdate);
+            }
+        }
+
+        @Override
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+
+        }
+
+        @Override
+        public void onProviderEnabled(String provider) {
+
+        }
+
+        @Override
+        public void onProviderDisabled(String provider) {
+
+        }
+    };
+
 
     private void doMap(){
         findViewById(R.id.member_layout).setVisibility(View.GONE);
@@ -1013,15 +1095,17 @@ public class GameActivity extends AppCompatActivity {
                     public void run() {
                         if (testLocation != null && currentLocation != null) {
                             double speed = getDistance(currentLocation.getLatitude(), currentLocation.getLongitude(), testLocation.getLatitude(), testLocation.getLongitude());
-                            if (speed < 0.5d) {
+                            System.out.println(speed);
+                            if (speed < 0.3d) {
                                 if(currentMarker != null) {
-                                    currentMarker.setVisible(false);
+                                    currentMarker.remove();
                                 }
 
                             } else {
                                 if(currentMarker != null) {
-                                    currentMarker.setVisible(true);
+                                    currentMarker.remove();
                                 }
+                                currentMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude())).icon(currentIcon).anchor(0.5f, 0.5f));
                                 pointTest += (int)(speed * 10d);
                                 pointText.setText(pointTest + " pt");
                             }
@@ -1030,7 +1114,7 @@ public class GameActivity extends AppCompatActivity {
                     }
                 });
             }
-        }, 500, 1000);
+        }, 0, 1000);
     }
 
     /**
@@ -1041,6 +1125,7 @@ public class GameActivity extends AppCompatActivity {
         @Override
         public void onMyLocationChange(final Location location) {
             if(location != null) {
+                System.out.println("original " + location.getLatitude());
                 currentLocation = location;
                 CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLng(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()));
                 mMap.animateCamera(cameraUpdate);

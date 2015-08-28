@@ -1,14 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="actionbar">#c21d20</color>
-    <color name="app">#e32d30</color>
+    <color name="actionbar">#08c153</color>
+    <color name="app">#08c153</color>
+    <color name="accent_orange">#ff7031</color>
     <color name="text_black">#222222</color>
     <color name="text_white">#ffffff</color>
     <color name="text_gray">#999999</color>
-    <color name="background">#f8fffd</color>
+    <color name="background">#ffffff</color>
 
     <color name="light_yellow">#fcf8da8f</color>
     <color name="white">#ffffff</color>
+    <color name="back_gray">#66000000</color>
 
     <color name="divider">#666666</color>
 </resources>

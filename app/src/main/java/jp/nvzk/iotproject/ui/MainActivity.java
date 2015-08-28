@@ -45,37 +45,38 @@ import jp.nvzk.iotproject.util.ProfileUtil;
 
 public class MainActivity extends AppCompatActivity {
 
-    private final static int SDKVER_LOLLIPOP = 21;
-    private final static int REQUEST_ENABLE_BT = 100;
+    private final int SDKVER_LOLLIPOP = 21;
+    private final int REQUEST_ENABLE_BT = 100;
 
-    private static byte[] bleByteDataFirst;
-    private static byte[] bleByteDataSecond;
-
-    private static final int MESSAGE_FIRST = 0;
-    private static final int MESSAGE_SECOND = 1;
+    private final int MESSAGE_FIRST = 0;
+    private final int MESSAGE_SECOND = 1;
+    private final int MESSAGE_DIALOG = 2;
 
     private BluetoothManager mBleManager;
-    private static BluetoothAdapter mBleAdapter;
+    private BluetoothAdapter mBleAdapter;
     private BluetoothLeScanner mBleScanner;
-    private static BluetoothGatt mBleGattFirst;
-    private static BluetoothGatt mBleGattSecond;
+    private BluetoothGatt mBleGattFirst;
+    private BluetoothGatt mBleGattSecond;
 
     private Button reselectBtn;
-    private static Button decideBtn;
-    private static TextView selectedTextFirst;
-    private static TextView selectedTextSecond;
+    private Button decideBtn;
+    private TextView selectedTextFirst;
+    private TextView selectedTextSecond;
 
-    private static ListView deviceListViewFirst;
+    private ListView deviceListViewFirst;
     private DeviceListAdapter deviceListFirstAdapter;
     private List<BluetoothDevice> deviceListFirst = new ArrayList<>();
-    private static ListView deviceListViewSecond;
+    private ListView deviceListViewSecond;
     private DeviceListAdapter deviceListSecondAdapter;
     private List<BluetoothDevice> deviceListSecond = new ArrayList<>();
 
-    private static boolean isSetLeft = false;
-    private static boolean isSetRight = false;
+    private boolean isSetLeft = false;
+    private boolean isSetRight = false;
 
     private AlertDialog gpsDialog;
+
+    private String message;
+    private SingleFragment dialogFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -118,7 +119,6 @@ public class MainActivity extends AppCompatActivity {
         reselectBtn.setOnClickListener(mOnReselectClickListener);
         decideBtn = (Button) findViewById(R.id.main_decide_btn);
         decideBtn.setOnClickListener(mOnDecideClickListener);
-        decideBtn.setEnabled(true);
 
         selectedTextFirst = (TextView)findViewById(R.id.main_select_text1);
         selectedTextSecond = (TextView)findViewById(R.id.main_select_text2);
@@ -147,15 +147,20 @@ public class MainActivity extends AppCompatActivity {
             deviceListSecondAdapter.notifyDataSetChanged();
         }
 
+        deviceListViewFirst.setVisibility(View.VISIBLE);
+        deviceListViewSecond.setVisibility(View.VISIBLE);
+        selectedTextFirst.setVisibility(View.GONE);
+        selectedTextSecond.setVisibility(View.GONE);
+        isSetRight = false;
+        isSetLeft = false;
+
+        decideBtn.setEnabled(false);
+        deviceListViewFirst.setEnabled(true);
+        deviceListViewSecond.setEnabled(true);
 
         checkBluetooth();
         checkGPS();
-    }
-
-    @Override
-    protected void onPause(){
-        reset();
-        super.onPause();
+        startScan();
     }
 
     @Override
@@ -172,15 +177,21 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void reset(){
-        deviceListViewFirst.setVisibility(View.VISIBLE);
-        deviceListViewSecond.setVisibility(View.VISIBLE);
-        selectedTextFirst.setVisibility(View.GONE);
-        selectedTextSecond.setVisibility(View.GONE);
-        isSetRight = false;
-        isSetLeft = false;
-        //TODO !!
-        decideBtn.setEnabled(true);
+    @Override
+    protected void onPause(){
+        super.onPause();
+        if(mBleGattFirst != null) {
+            mBleGattFirst.close();
+            mBleGattFirst = null;
+        }
+
+        if(mBleGattSecond != null) {
+            mBleGattSecond.close();
+            mBleGattSecond = null;
+        }
+    }
+
+    private void startScan(){
 
         if (Build.VERSION.SDK_INT >= SDKVER_LOLLIPOP)
         {
@@ -193,16 +204,6 @@ public class MainActivity extends AppCompatActivity {
             if(mBleAdapter != null && mBleAdapter.isEnabled()) {
                 mBleAdapter.stopLeScan(mScanCallbackUnder);
             }
-        }
-
-        if(mBleGattFirst != null) {
-            mBleGattFirst.close();
-            mBleGattFirst = null;
-        }
-
-        if(mBleGattSecond != null) {
-            mBleGattSecond.close();
-            mBleGattSecond = null;
         }
     }
 
@@ -417,11 +418,53 @@ public class MainActivity extends AppCompatActivity {
         {
             // キャラクタリスティックのUUIDをチェック(getUuidの結果が全て小文字で帰ってくるのでUpperCaseに変換)
             if (Const.UUID_BLESERIAL_RX.toUpperCase().equals(characteristic.getUuid().toString().toUpperCase())){
-                bleByteDataFirst = characteristic.getValue();
+                byte[] bleByteData = characteristic.getValue();
 
-                if(bleByteDataFirst != null) {
-                    // メインスレッドでTextViewに値をセットする.
-                    mBleHandler.sendEmptyMessage(MESSAGE_FIRST);
+                if(bleByteData != null) {
+                    Sensor sensor = new Sensor();
+                    try {
+                        sensor.setSensor(bleByteData);
+                    }catch (Exception e){
+                        return;
+                    }
+
+                    switch(sensor.getSide()){
+                        case 0:
+                            System.out.println("左");
+                            if(!isSetLeft){
+                                isSetLeft = true;
+                                message = mBleGattFirst.getDevice().getName() + "\n" + getResources().getString(R.string.select_left);
+                                // メインスレッドでTextViewに値をセットする.
+                                mBleHandler.sendEmptyMessage(MESSAGE_FIRST);
+                                ProfileUtil.setBluetoothDeviceLeft(mBleGattFirst.getDevice());
+                            }
+                            else {
+                                message = getString(R.string.dialog_error_already_set);
+                                mBleHandler.sendEmptyMessage(MESSAGE_DIALOG);
+                            }
+                            break;
+                        case 1:
+                            System.out.println("右");
+                            if(!isSetRight){
+                                isSetRight = true;
+                                message = mBleGattFirst.getDevice().getName() + "\n" + getString(R.string.select_right);
+                                // メインスレッドでTextViewに値をセットする.
+                                mBleHandler.sendEmptyMessage(MESSAGE_FIRST);
+                                ProfileUtil.setBluetoothDeviceRight(mBleGattFirst.getDevice());
+                            }
+                            else{
+                                message = getString(R.string.dialog_error_already_set);
+                                mBleHandler.sendEmptyMessage(MESSAGE_DIALOG);
+                            }
+                            break;
+                        default:
+                            message = getString(R.string.dialog_error_unavailable_device);
+                            mBleHandler.sendEmptyMessage(MESSAGE_DIALOG);
+                    }
+                    if(mBleGattFirst != null) {
+                        mBleGattFirst.close();
+                        //mBleGattFirst = null;
+                    }
                 }
             }
         }
@@ -494,11 +537,53 @@ public class MainActivity extends AppCompatActivity {
         {
             // キャラクタリスティックのUUIDをチェック(getUuidの結果が全て小文字で帰ってくるのでUpperCaseに変換)
             if (Const.UUID_BLESERIAL_RX.toUpperCase().equals(characteristic.getUuid().toString().toUpperCase())){
-                bleByteDataSecond = characteristic.getValue();
+                byte[] bleByteData = characteristic.getValue();
 
-                if(bleByteDataSecond != null) {
-                    // メインスレッドでTextViewに値をセットする.
-                    mBleHandler.sendEmptyMessage(MESSAGE_SECOND);
+                if(bleByteData != null) {
+                    Sensor sensor = new Sensor();
+                    try {
+                        sensor.setSensor(bleByteData);
+                    }catch (Exception e){
+                        return;
+                    }
+
+                    switch(sensor.getSide()){
+                        case 0:
+                            System.out.println("左");
+                            if(!isSetLeft){
+                                isSetLeft = true;
+                                message = mBleGattSecond.getDevice().getName() + "\n" + getResources().getString(R.string.select_left);
+                                // メインスレッドでTextViewに値をセットする.
+                                mBleHandler.sendEmptyMessage(MESSAGE_SECOND);
+                                ProfileUtil.setBluetoothDeviceLeft(mBleGattSecond.getDevice());
+                            }
+                            else {
+                                message = getString(R.string.dialog_error_already_set);
+                                mBleHandler.sendEmptyMessage(MESSAGE_DIALOG);
+                            }
+                            break;
+                        case 1:
+                            System.out.println("右");
+                            if(!isSetRight){
+                                isSetRight = true;
+                                message = mBleGattSecond.getDevice().getName() + "\n" + getString(R.string.select_right);
+                                // メインスレッドでTextViewに値をセットする.
+                                mBleHandler.sendEmptyMessage(MESSAGE_SECOND);
+                                ProfileUtil.setBluetoothDeviceRight(mBleGattSecond.getDevice());
+                            }
+                            else{
+                                message = getString(R.string.dialog_error_already_set);
+                                mBleHandler.sendEmptyMessage(MESSAGE_DIALOG);
+                            }
+                            break;
+                        default:
+                            message = getString(R.string.dialog_error_unavailable_device);
+                            mBleHandler.sendEmptyMessage(MESSAGE_DIALOG);
+                    }
+                    if(mBleGattSecond != null) {
+                        mBleGattSecond.close();
+                        //mBleGattSecond = null;
+                    }
                 }
             }
         }
@@ -515,150 +600,38 @@ public class MainActivity extends AppCompatActivity {
     private Handler mBleHandler = new Handler(){
         @Override
         public void handleMessage(Message msg){
-            Sensor sensor = new Sensor();
-            try {
-                sensor = sensor.getNewSensor(bleByteDataFirst);
-                //sensor.setSensor(bleByteDataFirst);
-                System.out.println(sensor.getSide());
-            }
-            catch (Exception e){
-                return;
-            }
-
             switch (msg.what){
                 case MESSAGE_FIRST:
-
-                    switch(sensor.getSide()){
-                        case 0:
-                            System.out.println("左");
-                            if(!isSetLeft){
-                                isSetLeft = true;
-                                selectedTextFirst.setText(mBleGattFirst.getDevice().getName() + "\n" + getResources().getString(R.string.select_left));
-                                ProfileUtil.setBluetoothDeviceLeft(mBleGattFirst.getDevice());
-                            }
-                            else {
-                                SingleFragment check = (SingleFragment)getSupportFragmentManager().findFragmentByTag("already");
-                                if(check == null) {
-                                    SingleFragment dialog = SingleFragment.getInstance(getResources().getString(R.string.dialog_error_already_set));
-                                    dialog.show(getSupportFragmentManager(), "already");
-                                }
-                                if(mBleGattFirst != null) {
-                                    mBleGattFirst.close();
-                                    //mBleGattFirst = null;
-                                }
-                                return;
-                            }
-                            break;
-                        case 1:
-                            System.out.println("右");
-                            if(!isSetRight){
-                                isSetRight = true;
-                                selectedTextFirst.setText(mBleGattFirst.getDevice().getName() + "\n" + getString(R.string.select_right));
-                                ProfileUtil.setBluetoothDeviceRight(mBleGattFirst.getDevice());
-                            }
-                            else{
-                                SingleFragment check = (SingleFragment)getSupportFragmentManager().findFragmentByTag("already");
-                                if(check == null) {
-                                    SingleFragment dialog = SingleFragment.getInstance(getString(R.string.dialog_error_already_set));
-                                    dialog.show(getSupportFragmentManager(), "already");
-                                }
-                                if(mBleGattFirst != null) {
-                                    mBleGattFirst.close();
-                                    //mBleGattFirst = null;
-                                }
-                                return;
-                            }
-
-                            break;
-                        default:
-                            SingleFragment check = (SingleFragment)getSupportFragmentManager().findFragmentByTag("device");
-                            if(check == null) {
-                                SingleFragment dialog = SingleFragment.getInstance(getString(R.string.dialog_error_unavailable_device));
-                                dialog.show(getSupportFragmentManager(), "device");
-                            }
-                            if(mBleGattFirst != null) {
-                                mBleGattFirst.close();
-                                //mBleGattFirst = null;
-                            }
-                            return;
-                    }
+                    selectedTextFirst.setText(message);
                     selectedTextFirst.setVisibility(View.VISIBLE);
                     deviceListViewFirst.setVisibility(View.GONE);
-
-                    mBleGattFirst.close();
-                    //mBleGattFirst = null;
                     break;
                 case MESSAGE_SECOND:
-                    try {
-                        sensor.setSensor(bleByteDataSecond);
-                    }
-                    catch (Exception e){
-                        return;
-                    }
-                    switch(sensor.getSide()){
-                        case 0:
-                            System.out.println("左");
-                            if(!isSetLeft){
-                                selectedTextSecond.setText(mBleGattSecond.getDevice().getName() + "\n" + getString(R.string.select_left));
-                                isSetLeft = true;
-                                ProfileUtil.setBluetoothDeviceLeft(mBleGattSecond.getDevice());
-                            }
-                            else {
-                                SingleFragment check = (SingleFragment)getSupportFragmentManager().findFragmentByTag("already");
-                                if(check == null) {
-                                    SingleFragment dialog = SingleFragment.getInstance(getString(R.string.dialog_error_already_set));
-                                    dialog.show(getSupportFragmentManager(), "already");
-                                }
-                                if(mBleGattSecond != null) {
-                                    mBleGattSecond.close();
-                                    //mBleGattSecond = null;
-                                }
-                                return;
-                            }
-
-                            break;
-                        case 1:
-                            System.out.println("右");
-                            if(!isSetRight){
-                                selectedTextSecond.setText(mBleGattSecond.getDevice().getName() + "\n" + getString(R.string.select_right));
-                                isSetRight = true;
-                                ProfileUtil.setBluetoothDeviceRight(mBleGattSecond.getDevice());
-                            }
-                            else{
-                                SingleFragment check = (SingleFragment)getSupportFragmentManager().findFragmentByTag("already");
-                                if(check == null) {
-                                    SingleFragment dialog = SingleFragment.getInstance(getString(R.string.dialog_error_already_set));
-                                    dialog.show(getSupportFragmentManager(), "already");
-                                }
-                                if(mBleGattSecond != null) {
-                                    mBleGattSecond.close();
-                                    //mBleGattSecond = null;
-                                }
-                                return;
-                            }
-
-                            break;
-                        default:
-                            SingleFragment check = (SingleFragment)getSupportFragmentManager().findFragmentByTag("device");
-                            if(check == null) {
-                                SingleFragment dialog = SingleFragment.getInstance(getString(R.string.dialog_error_unavailable_device));
-                                dialog.show(getSupportFragmentManager(), "device");
-                            }
-                            if(mBleGattSecond != null) {
-                                mBleGattSecond.close();
-                                //mBleGattSecond = null;
-                            }
-                            return;
-
-                    }
+                    selectedTextSecond.setText(message);
                     selectedTextSecond.setVisibility(View.VISIBLE);
                     deviceListViewSecond.setVisibility(View.GONE);
-
-                    mBleGattSecond.close();
-                    //mBleGattSecond = null;
+                    break;
+                case MESSAGE_DIALOG:
+                    if(dialogFragment == null){
+                        dialogFragment = SingleFragment.getInstance(message);
+                        dialogFragment.setCloseListener(new SingleFragment.OnCloseListener() {
+                            @Override
+                            public void onClose() {
+                                dialogFragment = null;
+                            }
+                        });
+                        dialogFragment.show(getSupportFragmentManager(), "alert");
+                    }
                     break;
             }
 
+            deviceListViewFirst.setEnabled(true);
+            deviceListViewSecond.setEnabled(true);
+
+            //TODO とりあえず右側だけで！
+            if(isSetRight){
+                decideBtn.setEnabled(true);
+            }
             if(isSetLeft && isSetRight){
                 decideBtn.setEnabled(true);
             }
@@ -673,6 +646,7 @@ public class MainActivity extends AppCompatActivity {
     private AdapterView.OnItemClickListener onDeviceFirstItemClickListener = new AdapterView.OnItemClickListener() {
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            deviceListViewFirst.setEnabled(false);
             if(mBleGattFirst != null) {
                 mBleGattFirst.close();
                 mBleGattFirst = null;
@@ -689,6 +663,7 @@ public class MainActivity extends AppCompatActivity {
     private AdapterView.OnItemClickListener onDeviceSecondItemClickListener = new AdapterView.OnItemClickListener() {
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            deviceListViewSecond.setEnabled(false);
             if(mBleGattSecond != null) {
                 mBleGattSecond.close();
                 mBleGattSecond = null;
@@ -706,7 +681,16 @@ public class MainActivity extends AppCompatActivity {
     private View.OnClickListener mOnReselectClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            reset();
+            if(mBleGattFirst != null) {
+                mBleGattFirst.close();
+                mBleGattFirst = null;
+            }
+
+            if(mBleGattSecond != null) {
+                mBleGattSecond.close();
+                mBleGattSecond = null;
+            }
+
             onResume();
         }
     };

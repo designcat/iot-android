@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">IotProject</string>
+    <string name="app_name">peta×peta</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
     
@@ -25,10 +25,12 @@
     <string name="dialog_error_unavailable_device">適応していないデバイスです。</string>
     <string name="dialog_error_connect_device">デバイスの接続に失敗しました。</string>
     <string name="dialog_error_empty">入力していない項目があります。</string>
-    <string name="dialog_your_turn">あなたが鬼になりました！</string>
-    <string name="dialog_change_to_citizen">市民になりました！</string>
+    <string name="dialog_your_turn">あなたがBetanになりました！</string>
+    <string name="dialog_change_to_citizen">Petanになりました！</string>
+    <string name="dialog_ready_gps">GPS情報を取得準備中です。</string>
+    <string name="dialog_ready_device">デバイスに接続中です。</string>
 
-    <string name="oni">鬼</string>
-    <string name="citizen">市民</string>
+    <string name="oni">Betan</string>
+    <string name="citizen">Petan</string>
 
 </resources>
