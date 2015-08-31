@@ -29,6 +29,14 @@
         <item name="android:colorForeground">@color/grey600</item>-->
     </style>
 
+    <!-- Application theme. -->
+    <style name="AppTheme" parent="MyTheme">
+    </style>
+
+    <style name="Widget.MyApp.ActionBar" parent="AppTheme">
+        <item name="android:background">@color/background</item>
+    </style>
+
     <style name="FragmentDialog" parent="Theme.AppCompat.Light.Dialog">
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowNoTitle">true</item>

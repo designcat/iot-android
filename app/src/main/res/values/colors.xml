@@ -8,6 +8,14 @@
     <color name="text_gray">#999999</color>
     <color name="background">#ffffff</color>
 
+    <color name="petan_actionbar">#08c153</color>
+    <color name="petan_point_back">#ffffff</color>
+    <color name="petan_point">#08c153</color>
+    <color name="betan_actionbar">#000000</color>
+    <color name="betan_point_back">#868382</color>
+    <color name="betan_point">#4c4848</color>
+    <color name="status">#ffff20</color>
+
     <color name="light_yellow">#fcf8da8f</color>
     <color name="white">#ffffff</color>
     <color name="back_gray">#66000000</color>

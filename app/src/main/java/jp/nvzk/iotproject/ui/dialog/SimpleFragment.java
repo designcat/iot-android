@@ -55,6 +55,7 @@ public class SimpleFragment extends DialogFragment {
         mDialog = new Dialog(getActivity(), R.style.FragmentDialog);
         mDialog.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN);
         mDialog.setContentView(R.layout.fragment_dialog_small);
+        mDialog.setCancelable(false);
         mDialog.setCanceledOnTouchOutside(false);
     }
 

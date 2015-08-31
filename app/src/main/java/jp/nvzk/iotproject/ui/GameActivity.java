@@ -255,12 +255,13 @@ public class GameActivity extends AppCompatActivity {
         memberListAdapter = new MemberListAdapter(this, memberList);
         memberListView.setAdapter(memberListAdapter);
 
-        statusText = (TextView) findViewById(R.id.map_status);
-        pointText = (TextView) findViewById(R.id.map_point);
-        timeText = (TextView) findViewById(R.id.map_time);
+        statusText = (TextView) findViewById(R.id.game_status);
+        pointText = (TextView) findViewById(R.id.game_point);
+        timeText = (TextView) findViewById(R.id.game_time);
         readyText = (TextView) findViewById(R.id.ready_timer);
 
         gpsFragment = SimpleFragment.getInstance(getString(R.string.dialog_ready_gps));
+        gpsFragment.setCancelable(false);
         gpsFragment.show(getSupportFragmentManager(), "gps");
     }
 
@@ -501,7 +502,7 @@ public class GameActivity extends AppCompatActivity {
                     }
 
                     if(item.getId().equals(ProfileUtil.getUserId())) {
-                        pointText.setText(item.getPoint() + " pt");
+                        pointText.setText(String.valueOf(item.getPoint()));
                         //TODO やり方かえる
                         if(item.isMoving()){
                             //mMap.setMyLocationEnabled(true);
@@ -599,7 +600,8 @@ public class GameActivity extends AppCompatActivity {
             //デバイスと接続開始
             //mBleGattLeft = ProfileUtil.getBluetoothDeviceLeft().connectGatt(getApplicationContext(), false, mGattCallbackLeft);
             //mBleGattRight = ProfileUtil.getBluetoothDeviceRight().connectGatt(getApplicationContext(), false, mGattCallbackRight);
-            //deviceFragment = SimpleFragment.getInstance(getString(R.string.dialog_ready_device));
+            deviceFragment = SimpleFragment.getInstance(getString(R.string.dialog_ready_device));
+            deviceFragment.setCancelable(false);
             //deviceFragment.show(getSupportFragmentManager(), "left");
         }
     }
@@ -1107,7 +1109,7 @@ public class GameActivity extends AppCompatActivity {
                                 }
                                 currentMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude())).icon(currentIcon).anchor(0.5f, 0.5f));
                                 pointTest += (int)(speed * 10d);
-                                pointText.setText(pointTest + " pt");
+                                pointText.setText(String.valueOf(pointTest));
                             }
                         }
                         testLocation = currentLocation;
