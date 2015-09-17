@@ -31,6 +31,7 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -44,6 +45,8 @@ import jp.nvzk.iotproject.util.ProfileUtil;
 
 
 public class MainActivity extends AppCompatActivity {
+
+    private mBleHandler mBleHandler = new mBleHandler(this);
 
     private final int SDKVER_LOLLIPOP = 21;
     private final int REQUEST_ENABLE_BT = 100;
@@ -597,9 +600,22 @@ public class MainActivity extends AppCompatActivity {
     /**
      * キャラクタリスティックの受信に応じてUIスレッド処理
      */
-    private Handler mBleHandler = new Handler(){
+    private class mBleHandler extends Handler{
+        private final WeakReference<MainActivity> refActivity;
+
+        public mBleHandler(MainActivity mainActivity) {
+            refActivity = new WeakReference<>(mainActivity);
+        }
+
+
         @Override
         public void handleMessage(Message msg){
+            //==== インスタンス取得 ====//
+            MainActivity activity = refActivity.get();
+            if(activity == null) {
+                return;
+            }
+
             switch (msg.what){
                 case MESSAGE_FIRST:
                     selectedTextFirst.setText(message);

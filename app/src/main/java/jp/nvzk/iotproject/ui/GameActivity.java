@@ -303,6 +303,7 @@ public class GameActivity extends AppCompatActivity {
                 //入室した部屋IDとUserIdを送信
                 MyData data = new MyData();
                 data.setUserId(ProfileUtil.getUserId());
+                data.setName(ProfileUtil.getUserName());
                 data.setRoomId(roomId);
                 socket.emit("room", data);
             }
@@ -488,6 +489,7 @@ public class GameActivity extends AppCompatActivity {
                     Gson gson = new Gson();
                     Member item = gson.fromJson(new Gson().toJson(data), Member.class);
 
+                    //TODO  とりあえずGPSで判断
                     if (isTag && !item.getId().equals(ProfileUtil.getUserId()) && !item.getId().equals(cannotSendId)) {
                         double distance = getDistance(currentLocation.getLatitude(), currentLocation.getLongitude(), item.getGps().getLat(), item.getGps().getLng());
                         if (distance < tagRange) {
