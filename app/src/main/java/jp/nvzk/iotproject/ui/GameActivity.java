@@ -82,12 +82,11 @@ public class GameActivity extends AppCompatActivity {
     private SimpleFragment gpsFragment;
     private SimpleFragment deviceFragment;
 
+    private boolean isConnect;
     //TODO !!
-    private boolean isConnect = false;
-    private boolean connectRight;
-    //TODO !!
-    private boolean connectLeft = true;
-    private boolean isStart = false;
+    private boolean connectRight = true;
+    private boolean connectLeft;
+    private boolean isStart;
 
     private int roomId;
 
@@ -109,6 +108,8 @@ public class GameActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayUseLogoEnabled(false);
         getSupportActionBar().setHomeButtonEnabled(true);
         getSupportActionBar().setDisplayShowTitleEnabled(true);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setTitle(R.string.title_member);
 
         initView();
 
@@ -163,9 +164,16 @@ public class GameActivity extends AppCompatActivity {
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
         memberFragment = new MemberFragment();
-        fragmentTransaction.add(R.id.game_root_layout, memberFragment);
-        fragmentTransaction.commit();
         memberFragment.setOnStartClickListener(mOnStartClickListener);
+        fragmentTransaction.add(R.id.game_root_layout, memberFragment);
+
+        mapFragment = new MapFragment();
+        mapFragment.setOnLocationChangeListener(mOnLocationChangeListener);
+        fragmentTransaction.add(R.id.game_root_layout, mapFragment);
+
+        fragmentTransaction.show(memberFragment);
+        fragmentTransaction.hide(mapFragment);
+        fragmentTransaction.commit();
 
         gpsFragment = SimpleFragment.getInstance(getString(R.string.dialog_ready_gps));
         gpsFragment.setCancelable(false);
@@ -202,10 +210,11 @@ public class GameActivity extends AppCompatActivity {
         socket = SocketUtil.getSocket();
 
         socket.on("connected", onConnected
+        ).on("disconnect", onDisconnected
         ).on("startTimer", onStartTimer
         ).on("start", onStart
-        ).on("disconnect", onDisconnectMember
         ).on("login", onReceiveMemberList
+        ).on("logout", onLogoutMember
         ).on("footprint", onReceiveSensor
         ).on("tag", onReceiveTag
         ).on("finish", onFinishSocket
@@ -265,7 +274,7 @@ public class GameActivity extends AppCompatActivity {
     /**
      * メンバー退室時
      */
-    private Emitter.Listener onDisconnectMember = new Emitter.Listener() {
+    private Emitter.Listener onLogoutMember = new Emitter.Listener() {
         @Override
         public void call(final Object... args) {
             runOnUiThread(new Runnable() {
@@ -277,6 +286,21 @@ public class GameActivity extends AppCompatActivity {
                     if(memberFragment != null) {
                         memberFragment.removeMember(member);
                     }
+                }
+            });
+        }
+    };
+
+    /**
+     * 接続が切れたとき
+     */
+    private Emitter.Listener onDisconnected = new Emitter.Listener() {
+        @Override
+        public void call(final Object... args) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    System.out.println(args[0]);
                 }
             });
         }
@@ -302,11 +326,12 @@ public class GameActivity extends AppCompatActivity {
 
                     FragmentManager fragmentManager = getSupportFragmentManager();
                     FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-                    mapFragment = MapFragment.getInstance(time);
-                    fragmentTransaction.add(R.id.game_root_layout, mapFragment);
-                    fragmentTransaction.commit();
 
-                    mapFragment.setOnLocationChangeListener(mOnLocationChangeListener);
+                    mapFragment.countReadyTimer(time);
+                    fragmentTransaction.show(mapFragment);
+                    fragmentTransaction.hide(memberFragment);
+                    fragmentTransaction.commit();
+                    getSupportActionBar().hide();
 
                     memberFragment = null;
                 }
@@ -433,7 +458,7 @@ public class GameActivity extends AppCompatActivity {
             // BLEが使用可能ならスキャン開始.
             scanNewDevice();
             //TODO デバイスと接続開始 左右のセンサがセットされていないとエラーになるのでとりあえずコメントアウト
-            //mBleGattLeft = ProfileUtil.getBluetoothDeviceLeft().connectGatt(getApplicationContext(), false, mGattCallbackLeft);
+            mBleGattLeft = ProfileUtil.getBluetoothDeviceLeft().connectGatt(getApplicationContext(), false, mGattCallbackLeft);
             //mBleGattRight = ProfileUtil.getBluetoothDeviceRight().connectGatt(getApplicationContext(), false, mGattCallbackRight);
             deviceFragment = SimpleFragment.getInstance(getString(R.string.dialog_ready_device));
             deviceFragment.setCancelable(false);
@@ -481,7 +506,7 @@ public class GameActivity extends AppCompatActivity {
     @TargetApi(SDKVER_LOLLIPOP)
     private void startScanByBleScanner(){
         mBleScanner = mBleAdapter.getBluetoothLeScanner();
-        // デバイスの検出.
+        // デバイスの検出
         mBleScanner.startScan(mScanCallbackUp = new ScanCallback() {
             @Override
             public void onScanResult(int callbackType, ScanResult result) {
@@ -491,8 +516,16 @@ public class GameActivity extends AppCompatActivity {
                 if(device.getName() == null){
                     return;
                 }
-                if(result.getRssi() < tagRange && !device.getAddress().equals(cannotSendMacAddress[0]) && !device.getAddress().equals(cannotSendMacAddress[1])) {
-                    socket.emit("tag", device.getAddress());
+                if(!device.getAddress().equals(ProfileUtil.getBluetoothDeviceLeft().getAddress())
+                        //TODO コメントアウトはずす
+                        //&& !device.getAddress().equals(ProfileUtil.getBluetoothDeviceRight().getAddress())
+                        && result.getRssi() < tagRange
+                        && !device.getAddress().equals(cannotSendMacAddress[0])
+                        && !device.getAddress().equals(cannotSendMacAddress[1])
+                        ){
+                    if(isConnect) {
+                        socket.emit("tag", device.getAddress());
+                    }
                     stopScan();
                 }
             }
@@ -516,8 +549,16 @@ public class GameActivity extends AppCompatActivity {
                     if(device.getName() == null){
                         return;
                     }
-                    if(rssi < tagRange && !device.getAddress().equals(cannotSendMacAddress[0]) && !device.getAddress().equals(cannotSendMacAddress[1])) {
-                        socket.emit("tag", device.getAddress());
+                    if(!device.getAddress().equals(ProfileUtil.getBluetoothDeviceLeft().getAddress())
+                            //TODO コメントアウトはずす
+                            //&& !device.getAddress().equals(ProfileUtil.getBluetoothDeviceRight().getAddress())
+                            && rssi < tagRange
+                            && !device.getAddress().equals(cannotSendMacAddress[0])
+                            && !device.getAddress().equals(cannotSendMacAddress[1])
+                            ){
+                        if(isConnect) {
+                            socket.emit("tag", device.getAddress());
+                        }
                         stopScan();
                     }
                 }
@@ -803,8 +844,24 @@ public class GameActivity extends AppCompatActivity {
     private MemberFragment.onStartClickListener mOnStartClickListener = new MemberFragment.onStartClickListener() {
         @Override
         public void onStartClicked() {
-            //TODO なにかしら開始合図を送る
-            socket.emit("startTimer", 1);
+            //TODO なにかしら開始合図を送る サーバの準備ができるまで、クライアントでスタート　あとでelse以降は消す
+            if(isConnect) {
+                socket.emit("startTimer", 1);
+            }
+            else {
+                int time = 30000;
+
+                FragmentManager fragmentManager = getSupportFragmentManager();
+                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+
+                mapFragment.countReadyTimer(time);
+                fragmentTransaction.show(mapFragment);
+                fragmentTransaction.hide(memberFragment);
+                fragmentTransaction.commit();
+                getSupportActionBar().hide();
+
+                memberFragment = null;
+            }
         }
     };
 
@@ -821,6 +878,5 @@ public class GameActivity extends AppCompatActivity {
             currentLocation = location;
         }
     };
-
 
 }

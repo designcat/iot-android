@@ -1,5 +1,6 @@
 package jp.nvzk.iotproject.ui;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -7,8 +8,10 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,6 +32,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.maps.android.ui.IconGenerator;
 
+import java.lang.reflect.Field;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -57,7 +61,6 @@ public class MapFragment extends Fragment {
 
     private Timer readyTimer = new Timer(true);
     private Timer gameTimer = new Timer(true);
-    private Timer testTimer = new Timer(true);
 
     private GoogleMap mMap;
     private final int zoomLevel = 18;
@@ -79,6 +82,10 @@ public class MapFragment extends Fragment {
     private boolean isTag = false;
 
     private onLocationChangeListener mListener;
+
+    private FragmentManager mRetainedChildFragmentManager;
+
+    private Handler mHandler = new Handler();
 
 
     public static MapFragment getInstance(int readyTime) {
@@ -106,12 +113,42 @@ public class MapFragment extends Fragment {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        ((GameActivity)getActivity()).getSupportActionBar().hide();
-
-
+        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
         initView();
         readyMap(savedInstanceState);
-        countReadyTimer(getArguments().getInt(READY_TIME));
+        //countReadyTimer(getArguments().getInt(READY_TIME));
+    }
+
+    private FragmentManager childFragmentManager() {//!!!Use this instead of getFragmentManager, support library from 20+, has a bug that doesn't retain instance of nested fragments!!!!
+        if(mRetainedChildFragmentManager == null) {
+            mRetainedChildFragmentManager = getChildFragmentManager();
+        }
+        return mRetainedChildFragmentManager;
+    }
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+
+        if (mRetainedChildFragmentManager != null) {
+            //restore the last retained child fragment manager to the new
+            //created fragment
+            try {
+                Field childFMField = Fragment.class.getDeclaredField("mChildFragmentManager");
+                childFMField.setAccessible(true);
+                childFMField.set(this, mRetainedChildFragmentManager);
+            } catch (NoSuchFieldException e) {
+                e.printStackTrace();
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setRetainInstance(true);
+
     }
 
     @Override
@@ -121,9 +158,6 @@ public class MapFragment extends Fragment {
         }
         if(gameTimer != null){
             gameTimer.cancel();
-        }
-        if(testTimer != null){
-            testTimer.cancel();
         }
 
         locationManager.removeUpdates(locationListener);
@@ -143,12 +177,12 @@ public class MapFragment extends Fragment {
      */
     private void readyMap(Bundle savedInstanceState){
         // mapクラス関連の初期化
-        SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map_fragment);
+        SupportMapFragment mapFragment = (SupportMapFragment) childFragmentManager().findFragmentById(R.id.map_fragment);
         // 初期化
-        if (savedInstanceState == null) {
+        /*if (savedInstanceState == null) {
             // 初期起動
             mapFragment.setRetainInstance(true);
-        }
+        }*/
         mMap = mapFragment.getMap();
 
         setUpMapIfNeeded();
@@ -158,25 +192,41 @@ public class MapFragment extends Fragment {
      * 準備時間カウントダウン
      * @param time
      */
-    private void countReadyTimer(final int time){
+    private int tmpTime = 0;
+    public void countReadyTimer(int time){
+        tmpTime = time;
+        readyText.setText(sdf.format(tmpTime));
+
         readyTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-                if(!isAdded()) {
+                if (!isAdded()) {
                     return;
                 }
 
-                int tmpTime = time;
                 if (tmpTime > 0) {
                     tmpTime -= 1000;
                 } else if (readyTimer != null) {
                     readyTimer.cancel();
                     readyTimer = null;
+                    //TODO サーバ準備できたら消す！
+                    mHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            startGame(30000, false);
+                        }
+                    });
                 }
-                sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-                readyText.setText(sdf.format(tmpTime));
+
+                final int finalTmpTime = tmpTime;
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        readyText.setText(sdf.format(finalTmpTime));
+                    }
+                });
             }
-        }, 0, 1000);
+        }, 1000, 1000);
     }
 
     /**
@@ -184,8 +234,14 @@ public class MapFragment extends Fragment {
      * @param time
      * @param isTag
      */
-    public void startGame(final int time, boolean isTag){
-        if(isTag){
+    private int gameTime = 0;
+    public void startGame(int time, boolean isTag){
+        gameTime = time;
+        timeText.setText(sdf.format(gameTime));
+
+        mView.findViewById(R.id.map_overlay_layout).setVisibility(View.GONE);
+
+        if(!isTag){
             statusText.setText(getString(R.string.citizen));
         }
         else{
@@ -202,13 +258,11 @@ public class MapFragment extends Fragment {
                     return;
                 }
 
-                int gameTime = time;
                 if (gameTime > 0) {
                     gameTime -= 1000;
                 } else if (gameTimer != null) {
                     gameTimer.cancel();
                     gameTimer = null;
-                } else {
                     //TODO Socket通信により終了を受け取るので後で削除
                     ArrayList<Member> memberList = new ArrayList<Member>();
                     Member member = new Member();
@@ -222,9 +276,14 @@ public class MapFragment extends Fragment {
                     getActivity().finish();
                     //TODO ここまで全部
                 }
-                sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-                timeText.setText(sdf.format(gameTime));
 
+                final int finalGameTime = gameTime;
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        timeText.setText(sdf.format(finalGameTime));
+                    }
+                });
 
                 if (preLocation != null && currentLocation != null) {
                     double speed = DistanceUtil.getDistance(currentLocation.getLatitude(), currentLocation.getLongitude(), preLocation.getLatitude(), preLocation.getLongitude());
@@ -235,12 +294,17 @@ public class MapFragment extends Fragment {
                     if (0.3d < speed) {
                         currentMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude())).icon(currentIcon).anchor(0.5f, 0.5f));
                         point += (int) (speed * 10d);
-                        pointText.setText(String.valueOf(point));
+                        mHandler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                pointText.setText(String.valueOf(point));
+                            }
+                        });
                     }
                 }
                 preLocation = currentLocation;
             }
-        }, 0, 1000);
+        }, 1000, 1000);
     }
 
     /**

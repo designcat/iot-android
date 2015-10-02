@@ -161,9 +161,9 @@ public class MainActivity extends AppCompatActivity {
         deviceListViewFirst.setEnabled(true);
         deviceListViewSecond.setEnabled(true);
 
+        stopScan();
         checkBluetooth();
         checkGPS();
-        startScan();
     }
 
     @Override
@@ -194,7 +194,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void startScan(){
+    /**
+     * スキャン停止
+     */
+    private void stopScan(){
 
         if (Build.VERSION.SDK_INT >= SDKVER_LOLLIPOP)
         {
@@ -294,6 +297,10 @@ public class MainActivity extends AppCompatActivity {
 
 
     private ScanCallback mScanCallbackUp;
+
+    /**
+     * スキャンのコールバックを得る（上）
+     */
     @TargetApi(SDKVER_LOLLIPOP)
     private void startScanByBleScanner()
     {
@@ -330,7 +337,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * スキャンのコールバックを得る
+     * スキャンのコールバックを得る（下）
      */
     private final BluetoothAdapter.LeScanCallback mScanCallbackUnder = new BluetoothAdapter.LeScanCallback() {
         @Override
@@ -378,6 +385,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 SingleFragment dialog = SingleFragment.getInstance(getString(R.string.dialog_error_connect_device));
                 dialog.show(getSupportFragmentManager(), "connect");
+                deviceListViewSecond.setEnabled(true);
             }
         }
         @Override
@@ -498,6 +506,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 SingleFragment dialog = SingleFragment.getInstance(getString(R.string.dialog_error_connect_device));
                 dialog.show(getSupportFragmentManager(), "connect");
+                deviceListViewSecond.setEnabled(true);
             }
         }
         @Override
@@ -552,7 +561,6 @@ public class MainActivity extends AppCompatActivity {
 
                     switch(sensor.getSide()){
                         case 0:
-                            System.out.println("左");
                             if(!isSetLeft){
                                 isSetLeft = true;
                                 message = mBleGattSecond.getDevice().getName() + "\n" + getResources().getString(R.string.select_left);
@@ -566,7 +574,6 @@ public class MainActivity extends AppCompatActivity {
                             }
                             break;
                         case 1:
-                            System.out.println("右");
                             if(!isSetRight){
                                 isSetRight = true;
                                 message = mBleGattSecond.getDevice().getName() + "\n" + getString(R.string.select_right);
@@ -644,8 +651,8 @@ public class MainActivity extends AppCompatActivity {
             deviceListViewFirst.setEnabled(true);
             deviceListViewSecond.setEnabled(true);
 
-            //TODO とりあえず右側だけで！
-            if(isSetRight){
+            //TODO とりあえず左だけで！
+            if(isSetLeft){
                 decideBtn.setEnabled(true);
             }
             if(isSetLeft && isSetRight){

@@ -47,10 +47,6 @@ public class MemberFragment extends Fragment {
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-
-        ((GameActivity)getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        ((GameActivity)getActivity()).getSupportActionBar().setTitle(R.string.title_member);
-
         initView();
     }
 
