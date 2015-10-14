@@ -14,6 +14,7 @@ import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.location.Location;
 import android.location.LocationManager;
@@ -23,6 +24,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.KeyEvent;
@@ -77,10 +79,14 @@ public class GameActivity extends AppCompatActivity {
     private String mStrReceivedNum = "";
     private String mStrSendNum = "";
 
+    private RoomFragment roomFragment;
     private MemberFragment memberFragment;
     private MapFragment mapFragment;
     private SimpleFragment gpsFragment;
     private SimpleFragment deviceFragment;
+    private AlertDialog gpsDialog;
+
+    private boolean isFinish;
 
     private boolean isConnect;
     //TODO !!
@@ -88,7 +94,7 @@ public class GameActivity extends AppCompatActivity {
     private boolean connectLeft;
     private boolean isStart;
 
-    private int roomId;
+    private String roomId;
 
     private String[] cannotSendMacAddress = new String[2];
 
@@ -100,8 +106,6 @@ public class GameActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game);
 
-        roomId = getIntent().getIntExtra(Const.KEY.ROOM, 0);
-
         final Toolbar toolbar = (Toolbar) findViewById(R.id.tool_bar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setIcon(null);
@@ -109,7 +113,7 @@ public class GameActivity extends AppCompatActivity {
         getSupportActionBar().setHomeButtonEnabled(true);
         getSupportActionBar().setDisplayShowTitleEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setTitle(R.string.title_member);
+        getSupportActionBar().setTitle(R.string.title_room);
 
         initView();
 
@@ -134,6 +138,7 @@ public class GameActivity extends AppCompatActivity {
             mBleGattRight.close();
             mBleGattRight = null;
         }
+        isFinish = true;
 
         super.onDestroy();
     }
@@ -163,6 +168,11 @@ public class GameActivity extends AppCompatActivity {
     public void initView(){
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+
+        roomFragment = new RoomFragment();
+        roomFragment.setCreateRoomListener(mOnSelectRoomListener);
+        fragmentTransaction.add(R.id.game_root_layout, roomFragment);
+
         memberFragment = new MemberFragment();
         memberFragment.setOnStartClickListener(mOnStartClickListener);
         fragmentTransaction.add(R.id.game_root_layout, memberFragment);
@@ -171,7 +181,8 @@ public class GameActivity extends AppCompatActivity {
         mapFragment.setOnLocationChangeListener(mOnLocationChangeListener);
         fragmentTransaction.add(R.id.game_root_layout, mapFragment);
 
-        fragmentTransaction.show(memberFragment);
+        fragmentTransaction.show(roomFragment);
+        fragmentTransaction.hide(memberFragment);
         fragmentTransaction.hide(mapFragment);
         fragmentTransaction.commit();
 
@@ -183,11 +194,46 @@ public class GameActivity extends AppCompatActivity {
     /**
      * GPSの確認
      */
-    private void checkGPS(){
+    private boolean checkGPS(){
         LocationManager nlLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-        if (!nlLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
-            finish();
+        if (!nlLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+
+            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+            alertDialogBuilder.setMessage("GPSが有効になっていません。\n有効化しますか？")
+                    .setCancelable(false)
+
+                            //GPS設定画面起動用ボタンとイベントの定義
+                    .setPositiveButton("GPS設定起動",
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                    Intent callGPSSettingIntent = new Intent(
+                                            android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                                    startActivity(callGPSSettingIntent);
+                                    dialog.dismiss();
+                                    gpsDialog = null;
+                                }
+                            });
+            //キャンセルボタン処理
+            alertDialogBuilder.setNegativeButton("キャンセル",
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.cancel();
+                            gpsDialog = null;
+                        }
+                    });
+            if(gpsDialog == null) {
+                gpsDialog = alertDialogBuilder.create();
+                // 設定画面へ移動するかの問い合わせダイアログを表示
+                gpsDialog.show();
+            }
+
+            return false;
         }
+        if(gpsDialog != null){
+            gpsDialog.dismiss();
+            gpsDialog = null;
+        }
+        return true;
     }
 
 
@@ -199,14 +245,6 @@ public class GameActivity extends AppCompatActivity {
      * socket.ioの準備
      */
     private void initSocket(){
-        if(!connectRight || !connectLeft){
-            return;
-        }
-        if(deviceFragment != null) {
-            deviceFragment.dismiss();
-            deviceFragment = null;
-        }
-
         socket = SocketUtil.getSocket();
 
         socket.on("connected", onConnected
@@ -240,7 +278,6 @@ public class GameActivity extends AppCompatActivity {
             //入室した部屋IDとUserIdを送信
             MyData data = new MyData();
             data.setUserId(ProfileUtil.getUserId());
-            data.setName(ProfileUtil.getUserName());
             data.setRoomId(roomId);
             socket.emit("room", data);
 
@@ -348,13 +385,13 @@ public class GameActivity extends AppCompatActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-
-                    //鬼を振り分けた結果をもらう
                     JSONObject data = (JSONObject) args[0];
-
                     try {
                         int gameTime = data.getInt("gameTime");
                         boolean isTag = data.getBoolean("isTag");
+                        if(isTag){
+                            scanNewDevice();
+                        }
                         mapFragment.startGame(gameTime, isTag);
                         isStart = true;
                     } catch (JSONException e) {
@@ -374,13 +411,10 @@ public class GameActivity extends AppCompatActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    if(isStart) {
-                        JSONObject data = (JSONObject) args[0];
-                        Gson gson = new Gson();
-                        Member item = gson.fromJson(new Gson().toJson(data), Member.class);
-
-                        mapFragment.setFootPrint(item);
-                    }
+                    JSONObject data = (JSONObject) args[0];
+                    Gson gson = new Gson();
+                    Member item = gson.fromJson(new Gson().toJson(data), Member.class);
+                    mapFragment.setFootPrint(item);
                 }
             });
         }
@@ -408,6 +442,7 @@ public class GameActivity extends AppCompatActivity {
                                 scanNewDevice();
                             } else {
                                 cannotSendMacAddress = new String[2];
+                                stopScan();
                             }
 
                             mapFragment.changeTag(fromUserId, toUserId);
@@ -440,8 +475,37 @@ public class GameActivity extends AppCompatActivity {
 
 
     /*-------------------------
-    Bleutooth
+    Bluetooth
     ----------------------- */
+
+    /**
+     * デバイス接続成功時
+     */
+    private void successConnect(){
+        if(connectLeft && connectRight) {
+            dismissConnectingDialog();
+        }
+    }
+
+    private void dismissConnectingDialog(){
+        if(deviceFragment != null && !isFinish) {
+            deviceFragment.dismiss();
+            deviceFragment = null;
+        }
+    }
+
+    private void showErrorConnectDialog(){
+        if(!isFinish) {
+            SingleFragment dialog = SingleFragment.getInstance(getString(R.string.dialog_error_connect_device));
+            dialog.setCloseListener(new SingleFragment.OnCloseListener() {
+                @Override
+                public void onClose() {
+                    finish();
+                }
+            });
+            dialog.show(getSupportFragmentManager(), "connect");
+        }
+    }
 
     /**
      * bluetoothの準備確認
@@ -450,9 +514,10 @@ public class GameActivity extends AppCompatActivity {
         mBleManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         mBleAdapter = mBleManager.getAdapter();
 
-        // BluetoothがOffならリタイヤ.
+        // BluetoothがOffならインテントを表示する.
         if (mBleAdapter == null || !mBleAdapter.isEnabled()) {
-            finish();
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivity(enableBtIntent);
         }
         else {
             // BLEが使用可能ならスキャン開始.
@@ -523,7 +588,7 @@ public class GameActivity extends AppCompatActivity {
                         && !device.getAddress().equals(cannotSendMacAddress[0])
                         && !device.getAddress().equals(cannotSendMacAddress[1])
                         ){
-                    if(isConnect) {
+                    if(isConnect && isStart) {
                         socket.emit("tag", device.getAddress());
                     }
                     stopScan();
@@ -578,33 +643,12 @@ public class GameActivity extends AppCompatActivity {
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 // 接続に成功したらサービスを検索する.
                 gatt.discoverServices();
-                if(!connectLeft) {
-                    connectLeft = true;
-                    initSocket();
-                }
+                connectLeft = true;
+                successConnect();
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                System.out.println("unConnect");
-                // 接続が切れたらGATTを空にする.
-                if (mBleGattLeft != null)
-                {
-                    mBleGattLeft.close();
-                    mBleGattLeft = null;
-                }
-                if(!connectLeft){
-                    //接続失敗
-                    if(deviceFragment != null){
-                        deviceFragment.dismiss();
-                        deviceFragment = null;
-                    }
-                    SingleFragment dialog = SingleFragment.getInstance(getString(R.string.dialog_error_connect_device));
-                    dialog.setCloseListener(new SingleFragment.OnCloseListener() {
-                        @Override
-                        public void onClose() {
-                            finish();
-                        }
-                    });
-                    dialog.show(getSupportFragmentManager(), "connect");
-                }
+                //接続失敗
+                dismissConnectingDialog();
+                showErrorConnectDialog();
             }
         }
         @Override
@@ -689,32 +733,12 @@ public class GameActivity extends AppCompatActivity {
                 System.out.println("Connect");
                 // 接続に成功したらサービスを検索する.
                 gatt.discoverServices();
-                if(!connectRight) {
-                    connectRight = true;
-                    initSocket();
-                }
+                connectRight = true;
+                successConnect();
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                System.out.println("unConnect");
-                // 接続が切れたらGATTを空にする.
-                if (mBleGattRight != null) {
-                    mBleGattRight.close();
-                    mBleGattRight = null;
-                }
-                if(!connectRight){
-                    //接続失敗
-                    if(deviceFragment != null){
-                        deviceFragment.dismiss();
-                        deviceFragment = null;
-                    }
-                    SingleFragment dialog = SingleFragment.getInstance(getString(R.string.dialog_error_connect_device));
-                    dialog.setCloseListener(new SingleFragment.OnCloseListener() {
-                        @Override
-                        public void onClose() {
-                            finish();
-                        }
-                    });
-                    dialog.show(getSupportFragmentManager(), "connect");
-                }
+                //接続失敗
+                dismissConnectingDialog();
+                showErrorConnectDialog();
             }
         }
         @Override
@@ -836,6 +860,32 @@ public class GameActivity extends AppCompatActivity {
     /*--------------------
     Listener
     ---------------------- */
+
+
+    /**
+     * 部屋選択のリスナ
+     */
+    private RoomFragment.SelectRoomListener mOnSelectRoomListener = new RoomFragment.SelectRoomListener() {
+        @Override
+        public void onSelectRoom(String id) {
+            roomId = id;
+
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+
+            fragmentTransaction.show(memberFragment);
+            fragmentTransaction.hide(roomFragment);
+            fragmentTransaction.commit();
+            getSupportActionBar().setTitle(R.string.title_member);
+
+            roomFragment.stopSocket();
+            roomFragment = null;
+
+            if(connectRight && connectLeft){
+                initSocket();
+            }
+        }
+    };
 
 
     /**

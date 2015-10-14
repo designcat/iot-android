@@ -61,8 +61,6 @@
         </activity>
         <activity android:name=".ui.LoginActivity"
                   android:screenOrientation="portrait"/>
-        <activity android:name=".ui.RoomActivity"
-                  android:screenOrientation="portrait"/>
         <activity android:name=".ui.GameActivity"
                   android:screenOrientation="portrait"/>
         <activity android:name=".ui.RankingActivity"

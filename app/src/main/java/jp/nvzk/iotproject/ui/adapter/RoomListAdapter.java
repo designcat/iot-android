@@ -93,8 +93,8 @@ public class RoomListAdapter extends BaseAdapter {
             holder = (ViewHolder) convertView.getTag();
         }
 
-        holder.name.setText(room.getName());
-        holder.id.setText("ID: " + String.valueOf(room.getId()));
+        holder.name.setText(room.getRoomName());
+        holder.id.setText("ID: " + String.valueOf(room.getUserId()));
 
         return convertView;
     }

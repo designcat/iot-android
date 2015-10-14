@@ -107,7 +107,7 @@ public class LoginActivity extends AppCompatActivity {
 
             ProfileUtil.setUserName(nameText.getText().toString());
 
-            Intent intent = new Intent(LoginActivity.this, RoomActivity.class);
+            Intent intent = new Intent(LoginActivity.this, GameActivity.class);
             startActivity(intent);
         }
     };

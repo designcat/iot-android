@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:app="http://schemas.android.com/apk/res-auto"
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+    android:background="@color/dialog_background">
+
+    <ImageView
+        android:id="@+id/dialog_cancel_btn"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_margin="16dp"
+        android:src="@drawable/ic_launcher"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"/>
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:padding="16dp"
+        android:layout_centerInParent="true"
+        android:id="@+id/dialog_frame"
+        android:layout_margin="16dp">
+
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="20sp"
+            android:gravity="center"
+            android:padding="8dp"
+            android:textStyle="bold"
+            android:text="ルーム名を入力してください"
+            android:textColor="@color/white"/>
+        <EditText
+            android:id="@+id/dialog_room_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="8dp"
+            android:layout_margin="8dp"
+            android:hint="（例）ぺたぺたのへや"
+            android:textColorHint="@color/text_gray"
+            android:textColor="@drawable/text_edit"
+            android:layout_marginBottom="8dp"
+            android:inputType="text"
+            android:background="@drawable/back_edit"
+            android:maxLength="10"
+            android:maxLines="1"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:gravity="center"
+            android:textStyle="bold"
+            android:text="＊10文字以内"
+            android:textColor="@color/white"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="20sp"
+            android:gravity="center"
+            android:padding="8dp"
+            android:textStyle="bold"
+            android:text="最大人数を選択してください"
+            android:textColor="@color/white"
+            android:layout_marginTop="16dp"/>
+
+        <NumberPicker
+            android:id="@+id/dialog_member_number"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_margin="8dp"></NumberPicker>
+
+        <Button
+            android:layout_width="150dp"
+            android:layout_height="44dp"
+            style="@style/btn_green"
+            android:layout_marginTop="16dp"
+            android:id="@+id/dialog_create_btn"
+            android:text="@string/btn_create"/>
+
+    </LinearLayout>
+</RelativeLayout>

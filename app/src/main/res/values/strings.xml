@@ -19,6 +19,7 @@
     <string name="btn_close">閉じる</string>
     <string name="btn_cancel">キャンセル</string>
     <string name="btn_ok">OK</string>
+    <string name="btn_create">作成</string>
 
     <string name="dialog_error_unavailable_bluetooth">ご利用の端末はBluetoothの規格に対応していません。</string>
     <string name="dialog_error_already_set">既にそのデバイスは設定されています。</string>

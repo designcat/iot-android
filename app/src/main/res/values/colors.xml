@@ -7,6 +7,10 @@
     <color name="text_white">#ffffff</color>
     <color name="text_gray">#999999</color>
     <color name="background">#ffffff</color>
+    <color name="dialog_background">#cc222222</color>
+
+    <color name="app_green">#08c153</color>
+    <color name="app_red">#ff7031</color>
 
     <color name="petan_actionbar">#08c153</color>
     <color name="petan_point_back">#ffffff</color>

@@ -6,7 +6,7 @@ package jp.nvzk.iotproject.model;
 public class MyData {
     private String userId;
     private String name;
-    private int roomId;
+    private String roomId;
 
     public String getUserId() {
         return userId;
@@ -24,11 +24,11 @@ public class MyData {
         this.name = name;
     }
 
-    public int getRoomId() {
+    public String getRoomId() {
         return roomId;
     }
 
-    public void setRoomId(int roomId) {
+    public void setRoomId(String roomId) {
         this.roomId = roomId;
     }
 }

@@ -15,6 +15,7 @@ public class Const {
     public static final String CLIENT_CHARACTERISTIC_CONFIG = "00002902-0000-1000-8000-00805f9b34fb";
 
     public static final String SOCKET_URL = "http://petaxpeta.herokuapp.com/";
+    public static final String SOCKET_URL_ROOM = "http://petaxpeta.herokuapp.com/";
 
     public class KEY{
         public static final String DEVICE = "DEVICE";
