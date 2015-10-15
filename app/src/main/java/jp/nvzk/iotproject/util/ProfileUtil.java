@@ -52,6 +52,14 @@ public class ProfileUtil {
         sEditor.putString("NAME", name).commit();
     }
 
+    public static String getUserPassword(){
+        return sSetting.getString("PASSWORD", "");
+    }
+
+    public static void setUserPassword(String pass){
+        sEditor.putString("PASSWORD", pass).commit();
+    }
+
     public static BluetoothDevice getBluetoothDeviceLeft(){
         String string = sSetting.getString("DEVICE_LEFT", "");
         Gson gson = new Gson();

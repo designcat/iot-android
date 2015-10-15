@@ -403,8 +403,7 @@ public class MainActivity extends AppCompatActivity {
 
                 // UUIDが同じかどうかを確認する.
                 BluetoothGattService service = gatt.getService(UUID.fromString(Const.UUID_BLESERIAL_SERVICE));
-                if (service != null)
-                {
+                if (service != null){
                     // 指定したUUIDを持つCharacteristicを確認する.
                     BluetoothGattCharacteristic mBleCharacteristic = service.getCharacteristic(UUID.fromString(Const.UUID_BLESERIAL_RX));
 
@@ -437,6 +436,8 @@ public class MainActivity extends AppCompatActivity {
             // キャラクタリスティックのUUIDをチェック(getUuidの結果が全て小文字で帰ってくるのでUpperCaseに変換)
             if (Const.UUID_BLESERIAL_RX.toUpperCase().equals(characteristic.getUuid().toString().toUpperCase())){
                 byte[] bleByteData = characteristic.getValue();
+
+                System.out.println("side:" + String.valueOf(bleByteData[0] & 0xff) + " length:" + bleByteData.length);
 
                 if(bleByteData != null) {
                     Sensor sensor = new Sensor();
@@ -533,8 +534,7 @@ public class MainActivity extends AppCompatActivity {
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 // UUIDが同じかどうかを確認する.
                 BluetoothGattService service = gatt.getService(UUID.fromString(Const.UUID_BLESERIAL_SERVICE));
-                if (service != null)
-                {
+                if (service != null){
                     // 指定したUUIDを持つCharacteristicを確認する.
                     BluetoothGattCharacteristic mBleCharacteristic = service.getCharacteristic(UUID.fromString(Const.UUID_BLESERIAL_RX));
 
@@ -576,7 +576,10 @@ public class MainActivity extends AppCompatActivity {
                         return;
                     }
 
+                    System.out.println("side:" + sensor.getSide() + "," + sensor.getPressure_thumb());
+
                     switch(sensor.getSide()){
+
                         case 0:
                             if(!isSetSecond && !isSetLeft){
                                 isSetLeft = true;
@@ -694,12 +697,12 @@ public class MainActivity extends AppCompatActivity {
                 mBleGattFirst = null;
             }
 
-            BluetoothDevice device = deviceListFirst.get(position);
-            mBleGattFirst = device.connectGatt(getApplicationContext(), false, mGattCallbackFirst);
-
             SimpleFragment dialog = SimpleFragment.getInstance(getString(R.string.dialog_ready_device));
             dialog.setCancelable(false);
             dialog.show(getSupportFragmentManager(), "bleFirst");
+
+            BluetoothDevice device = deviceListFirst.get(position);
+            mBleGattFirst = device.connectGatt(getApplicationContext(), false, mGattCallbackFirst);
         }
     };
 
@@ -714,12 +717,12 @@ public class MainActivity extends AppCompatActivity {
                 mBleGattSecond = null;
             }
 
-            BluetoothDevice device = deviceListSecond.get(position);
-            mBleGattSecond = device.connectGatt(getApplicationContext(), false, mGattCallbackSecond);
-
             SimpleFragment dialog = SimpleFragment.getInstance(getString(R.string.dialog_ready_device));
             dialog.setCancelable(false);
             dialog.show(getSupportFragmentManager(), "bleSecond");
+
+            BluetoothDevice device = deviceListSecond.get(position);
+            mBleGattSecond = device.connectGatt(getApplicationContext(), false, mGattCallbackSecond);
         }
     };
 

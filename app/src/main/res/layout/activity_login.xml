@@ -24,34 +24,21 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textColor="@color/text_gray"
-            android:text="ユーザID"
+            android:text="ユーザ名　(アルファベット小文字、数字、_のみ使用可)"
             android:textSize="12sp"/>
 
-        <LinearLayout
+        <EditText
+            android:id="@+id/login_id_edit_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
-            <EditText
-                android:id="@+id/login_edit_text"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:padding="8dp"
-                android:layout_marginRight="8dp"
-                android:hint=""
-                android:textColorHint="@color/text_gray"
-                android:textColor="@drawable/text_edit"
-                android:layout_marginBottom="8dp"
-                android:inputType="text"
-                android:background="@color/light_yellow"
-                android:focusable="false"/>
-            <Button
-                android:id="@+id/login_select_btn"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:padding="8dp"
-                android:text="アカウント選択"/>
-        </LinearLayout>
+            android:padding="8dp"
+            android:hint=""
+            android:textColorHint="@color/text_gray"
+            android:textColor="@drawable/text_edit"
+            android:layout_marginBottom="8dp"
+            android:inputType="text"
+            android:background="@color/light_yellow"/>
+
 
         <TextView
             android:layout_width="match_parent"
@@ -69,6 +56,25 @@
             android:textColor="@drawable/text_edit"
             android:hint=""
             android:inputType="text"
+            android:background="@color/light_yellow"
+            android:layout_marginBottom="8dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_gray"
+            android:text="パスワード"
+            android:textSize="12sp"/>
+
+        <EditText
+            android:id="@+id/login_password_edit_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="8dp"
+            android:textColorHint="@color/text_gray"
+            android:textColor="@drawable/text_edit"
+            android:hint=""
+            android:inputType="textPassword"
             android:background="@color/light_yellow"/>
 
         <Button

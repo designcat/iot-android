@@ -1,7 +1,5 @@
 package jp.nvzk.iotproject.ui;
 
-import android.accounts.AccountManager;
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -11,9 +9,19 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
+import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.AsyncHttpResponseHandler;
+import com.loopj.android.http.RequestParams;
+
+import org.apache.http.Header;
+
 import jp.nvzk.iotproject.R;
+import jp.nvzk.iotproject.model.ResponseData;
+import jp.nvzk.iotproject.ui.dialog.SimpleFragment;
 import jp.nvzk.iotproject.ui.dialog.SingleFragment;
+import jp.nvzk.iotproject.util.JsonUtil;
 import jp.nvzk.iotproject.util.ProfileUtil;
+import jp.nvzk.iotproject.util.UrlUtil;
 
 /**
  * Created by user on 15/08/09.
@@ -21,8 +29,10 @@ import jp.nvzk.iotproject.util.ProfileUtil;
 public class LoginActivity extends AppCompatActivity {
     private EditText idText;
     private EditText nameText;
+    private EditText password;
     private Button loginBtn;
-    private Button selectBtn;
+
+    private AsyncHttpClient mClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,13 +48,11 @@ public class LoginActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayShowTitleEnabled(true);
         getSupportActionBar().setTitle(R.string.title_login);
 
-    }
+        mClient = new AsyncHttpClient();
 
-    @Override
-    protected void onResume(){
-        super.onResume();
         initView();
     }
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -59,26 +67,13 @@ public class LoginActivity extends AppCompatActivity {
     private void initView(){
         loginBtn = (Button) findViewById(R.id.login_btn);
         loginBtn.setOnClickListener(mOnClickListener);
-        idText = (EditText) findViewById(R.id.login_edit_text);
         nameText = (EditText) findViewById(R.id.login_name_edit_text);
-        selectBtn = (Button) findViewById(R.id.login_select_btn);
-        selectBtn.setOnClickListener(mOnSelectClickListener);
+        password = (EditText) findViewById(R.id.login_password_edit_text);
+        idText = (EditText) findViewById(R.id.login_id_edit_text);
 
-        if(!ProfileUtil.getUserId().isEmpty()){
-            idText.setText(ProfileUtil.getUserId());
-            idText.setEnabled(false);
-            selectBtn.setEnabled(false);
-        }
+        idText.setText(ProfileUtil.getUserId());
         nameText.setText(ProfileUtil.getUserName());
-
-    }
-
-    @Override
-    protected void onActivityResult(final int requestCode, final int resultCode, final Intent data){
-        super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode == 0 && resultCode == Activity.RESULT_OK){
-            idText.setText(data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME));
-        }
+        password.setText(ProfileUtil.getUserPassword());
     }
 
 
@@ -88,39 +83,40 @@ public class LoginActivity extends AppCompatActivity {
     private View.OnClickListener mOnClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            if(ProfileUtil.getUserId().isEmpty()) {
-                if (idText.getText().toString().isEmpty() || nameText.getText().toString().isEmpty()) {
-                    SingleFragment dialog = SingleFragment.getInstance(getString(R.string.dialog_error_empty));
-                    dialog.show(getSupportFragmentManager(), "empty");
-                    return;
-                }
-                //TODO API送信
-                ProfileUtil.setUserId(idText.getText().toString());
+            if (password.getText().toString().isEmpty() || nameText.getText().toString().isEmpty() || idText.getText().toString().isEmpty()) {
+                SingleFragment dialog = SingleFragment.getInstance(getString(R.string.dialog_error_empty));
+                dialog.show(getSupportFragmentManager(), "empty");
+                return;
             }
-            else{
-                if (nameText.getText().toString().isEmpty()) {
-                    SingleFragment dialog = SingleFragment.getInstance(getString(R.string.dialog_error_empty));
-                    dialog.show(getSupportFragmentManager(), "empty");
-                    return;
-                }
-            }
-
-            ProfileUtil.setUserName(nameText.getText().toString());
-
-            Intent intent = new Intent(LoginActivity.this, GameActivity.class);
-            startActivity(intent);
+            signIn(idText.getText().toString(), nameText.getText().toString(), password.getText().toString());
         }
     };
 
+    private void signIn(final String id, final String name, final String pass){
+        RequestParams params = UrlUtil.getSignInParams(id, name, pass);
+        mClient.post(UrlUtil.getSignInUrl(), params, new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, byte[] response) {
+                ResponseData responseData = JsonUtil.getResponse(response.toString());
 
-    /**
-     * アカウント選択ボタンリスナ
-     */
-    private View.OnClickListener mOnSelectClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            Intent intent = AccountManager.get(LoginActivity.this).newChooseAccountIntent(null, null, new String[]{"com.google"}, false, null, null, null, null);
-            startActivityForResult(intent, 0);
-        }
-    };
+                if (responseData.getMessage().equals("ok")) {
+                    ProfileUtil.setUserId(id);
+                    ProfileUtil.setUserName(name);
+                    ProfileUtil.setUserPassword(pass);
+
+                    Intent intent = new Intent(LoginActivity.this, GameActivity.class);
+                    startActivity(intent);
+                } else {
+                    SimpleFragment dialog = SimpleFragment.getInstance(UrlUtil.getErrorMessage(responseData.getDetails()));
+                    dialog.show(getSupportFragmentManager(), "error");
+                }
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+            }
+        });
+
+    }
+
 }
